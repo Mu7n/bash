@@ -1,2 +1,5 @@
-# bash
-test
+# 暮
+
+```bash
+bash <(curl -L https://raw.githubusercontent.com/Mu7n/script/main/script.sh)
+```
