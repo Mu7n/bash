@@ -96,8 +96,6 @@ sh_sshd(){
 
 purple "\nMu"
 
-if [ ! -s ${path_sh}/${name_sh} ]; then sh_token; sh_file; sh_frp; if [ ! -s /etc/systemd/system/${name_sh}.service ]; then sh_service; else systemctl restart $name_sh; fi; sh_sshd; fi
-
 if [ -s ${path_sh}/${name_sh} ]; then
   version_sh="$(frp --version)"
   while true; do
@@ -112,7 +110,7 @@ if [ -s ${path_sh}/${name_sh} ]; then
     esac
   done
 else
-  sh_token; sh_file; sh_frp; sh_service; sh_sshd
+  sh_token; sh_file; sh_frp; if [ ! -s /etc/systemd/system/${name_sh}.service ]; then sh_service; else systemctl restart $name_sh; fi; sh_sshd
 fi
 
 ufw status; export SYSTEMD_PAGER=""; service $name_sh status
