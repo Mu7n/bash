@@ -39,7 +39,7 @@ purple(){ echo -e "\e[35m$1\e[0m";}
 cyan(){ echo -e "\e[36m$1\e[0m";}
 readp(){ read -p "$(cyan "$1")" $2;}
 
-case $(uname -m) in amd64 | x86_64) arch_sh="64";; i386 | i686) arch_sh="32";; *) red "未知系统！";; esac
+case $(uname -m) in amd64 | x86_64) arch_sh="64";; armv8 | aarch64) arch_sh="arm64-v8a";; i386 | i686) arch_sh="32";; *) red "未知系统！";; esac
 name_sh="xray"
 link_sh="https://github.com/XTLS/Xray-core/releases/download"
 api_sh="$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest)"
@@ -47,9 +47,9 @@ tag_sh="$(echo "$api_sh" | grep '"tag_name"' | awk -F '"' '{print $4}')"
 file_sh="Xray-linux-${arch_sh}.zip"
 url_sh="${link_sh}/${tag_sh}/${file_sh}"
 path_sh="/etc/aio/${name_sh}"
-grep_sh="$(ps -ef | grep "$name_sh" | grep -v grep | awk '{print $8}')"
+grep_sh="$(ps -ef | grep $name_sh | grep -v grep | awk '{print $8}')"
   
-sh_confnginx(){
+sh_nginx(){
   cat > /etc/nginx/nginx.conf << 'CONFIG'
 user www-data;
 pid /run/nginx.pid;
@@ -143,7 +143,7 @@ DEST
   nginx -t && systemctl reload nginx && purple "Nginx配置完成！"
 }
 
-sh_confxray(){
+sh_xray(){
   uuid_sh="$(xray uuid)"
   x25519_sh="$(xray x25519)"
   private_sh="$(echo "$x25519_sh" | grep 'PrivateKey' | awk '{print $2}')"
@@ -271,13 +271,13 @@ sh_confxray(){
 XTLSREALITYXHTTP
 }
 
-sh_filexray(){
+sh_file(){
   mkdir -p -m 644 $path_sh
   rm -rf ${path_sh}/${name_sh}
   while true; do if [ -s ${path_sh}/${name_sh} ]; then rm -rf ${file_sh}; ln -sf ${path_sh}/${name_sh} /usr/local/bin; break; else blue "$url_sh，正在下载。"; curl -OL $url_sh && unzip -oj $file_sh -d $path_sh || sleep 5; tag_sh=""; tag_sh="$(echo "$api_sh" | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/${tag_sh}/${file_sh}"; fi; done
 }
 
-sh_servicexray(){
+sh_service(){
   cat > /etc/systemd/system/${name_sh}.service << XRAY
 [Unit]
 Description=$name_sh Service
@@ -296,10 +296,7 @@ RuntimeDirectoryMode=0755
 WantedBy=multi-user.target
 XRAY
   if [ ! -z $grep_sh ]; then pkill -9 $name_sh; fi
-  chmod 644 /etc/systemd/system/${name_sh}.service
-  systemctl daemon-reload
-  systemctl start $name_sh
-  systemctl enable $name_sh
+  chmod 644 /etc/systemd/system/${name_sh}.service; systemctl daemon-reload; systemctl start $name_sh; systemctl enable $name_sh
 }
 
 sh_html(){
@@ -344,8 +341,8 @@ sh_menunginx(){
     blue "3、退出"
     readp "请输入选项：" option_sh
     case $option_sh in
-      1) sh_cert; sh_confnginx; return;;
-      2) rm -rf /etc/letsencrypt/{live,renewal,archive}; sh_domain; sh_cert; sh_confnginx; return;;
+      1) sh_cert; sh_nginx; return;;
+      2) rm -rf /etc/letsencrypt/{live,renewal,archive}; sh_domain; sh_cert; sh_nginx; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
@@ -370,8 +367,8 @@ sh_menuxray(){
     blue "3、退出"
     readp "请输入选项：" option_sh
     case $option_sh in
-      1) sh_filexray; systemctl restart xray; return;;
-      2) if [ $dest_sh != $domain_sh ]; then sed -i "s/${dest_sh}/${domain_sh}/g" ${path_sh}/xtlsxhttp.json; systemctl restart xray; purple "配置已修改。"; else cyan "reality vision"; purple "${reality_xtls}"; qrencode -m 1 -t UTF8i "${reality_xtls}"; cyan "\nreality xhttp"; purple "${reality_xhttp}"; qrencode -m 1 -t UTF8i "${reality_xhttp}"; break; fi; continue;;
+      1) sh_file; systemctl restart $name_sh; return;;
+      2) if [ $dest_sh != $domain_sh ]; then sed -i "s/${dest_sh}/${domain_sh}/g" ${path_sh}/xtlsxhttp.json; systemctl restart $name_sh; purple "配置已修改。"; else cyan "reality vision"; purple "${reality_xtls}"; qrencode -m 1 -t UTF8i "${reality_xtls}"; cyan "\nreality xhttp"; purple "${reality_xhttp}"; qrencode -m 1 -t UTF8i "${reality_xhttp}"; break; fi; continue;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
@@ -386,10 +383,10 @@ sh_menuxray(){
 if ! type "nginx" "certbot" "unzip" "qrencode" "ufw" >/dev/null 2>&1; then
   blue "开始安装。"
   apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip qrencode ufw
-  sh_html; sh_domain; sh_filexray; sh_confxray; sh_servicexray; sh_cert; sh_confnginx; sh_sshd
+  sh_html; sh_domain; sh_file; sh_xray; sh_service; sh_cert; sh_nginx; sh_sshd
 fi
 
-if [ ! -s ${path_sh}/${name_sh} ]; then sh_domain; sh_filexray; sh_confxray; if [ ! -s /etc/systemd/system/${name_sh}.service ]; then sh_servicexray; else systemctl restart xray; fi; if [ ! -s /etc/letsencrypt/live ]; then sh_cert; fi; sh_confnginx; sh_sshd; fi
+if [ ! -s ${path_sh}/${name_sh} ]; then sh_domain; sh_file; sh_xray; if [ ! -s /etc/systemd/system/${name_sh}.service ]; then sh_service; else systemctl restart $name_sh; fi; if [ ! -s /etc/letsencrypt/live ]; then sh_cert; fi; sh_nginx; sh_sshd; fi
 
 purple "\nMu"
 
