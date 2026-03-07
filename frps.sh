@@ -75,7 +75,7 @@ FRP
   chmod 644 /etc/systemd/system/${name_sh}.service; systemctl daemon-reload; systemctl start $name_sh; systemctl enable $name_sh
 }
 
-read_token(){
+sh_token(){
   readp "请输入username：" USERNAME
   readp "请输入password：" PASSWORD
   token_sh="${USERNAME}${PASSWORD}"
@@ -96,6 +96,8 @@ sh_sshd(){
 
 purple "\nMu"
 
+if [ ! -s ${path_sh}/${name_sh} ]; then sh_domain; sh_token; sh_file; sh_frp; if [ ! -s /etc/systemd/system/${name_sh}.service ]; then sh_service; else systemctl restart $name_sh; fi; sh_sshd; fi
+
 if [ -s ${path_sh}/${name_sh} ]; then
   #version_sh="$(frp version | awk 'NR==1 {print $2}')"
   while true; do
@@ -110,7 +112,7 @@ if [ -s ${path_sh}/${name_sh} ]; then
     esac
   done
 else
-  sh_domain; sh_file; sh_frp; sh_service; sh_sshd
+  sh_domain; sh_token; sh_file; sh_frp; sh_service; sh_sshd
 fi
 
 ufw status; export SYSTEMD_PAGER=""; service $name_sh status
