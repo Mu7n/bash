@@ -99,9 +99,9 @@ purple "\nMu"
 if [ ! -s ${path_sh}/${name_sh} ]; then sh_domain; sh_token; sh_file; sh_frp; if [ ! -s /etc/systemd/system/${name_sh}.service ]; then sh_service; else systemctl restart $name_sh; fi; sh_sshd; fi
 
 if [ -s ${path_sh}/${name_sh} ]; then
-  #version_sh="$(frp version | awk 'NR==1 {print $2}')"
+  version_sh="$(frp --version)"
   while true; do
-    #purple "检测到$version_sh版本。"
+    purple "检测到$version_sh版本。"
     blue "1、升级"
     blue "2、退出"
     readp "请输入选项：" option_sh
