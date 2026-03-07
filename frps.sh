@@ -96,7 +96,7 @@ sh_sshd(){
 
 purple "\nMu"
 
-if [ ! -s ${path_sh}/${name_sh} ]; then sh_domain; sh_token; sh_file; sh_frp; if [ ! -s /etc/systemd/system/${name_sh}.service ]; then sh_service; else systemctl restart $name_sh; fi; sh_sshd; fi
+if [ ! -s ${path_sh}/${name_sh} ]; then domain_sh; sh_token; sh_file; sh_frp; if [ ! -s /etc/systemd/system/${name_sh}.service ]; then sh_service; else systemctl restart $name_sh; fi; sh_sshd; fi
 
 if [ -s ${path_sh}/${name_sh} ]; then
   version_sh="$(frp --version)"
