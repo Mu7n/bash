@@ -106,8 +106,8 @@ if [ -s ${path_sh}/${name_sh} ]; then
     blue "2、退出"
     readp "请输入选项：" option_sh
     case $option_sh in
-      1) sh_file; systemctl restart $name_sh; return;;
-      2) return;;
+      1) sh_file; systemctl restart $name_sh; continue;;
+      2) break;;
       *) red "请重新输入！"; continue;;
     esac
   done
