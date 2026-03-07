@@ -112,7 +112,7 @@ if [ -s ${path_sh}/${name_sh} ]; then
     esac
   done
 else
-  sh_domain; sh_token; sh_file; sh_frp; sh_service; sh_sshd
+  domain_sh; sh_token; sh_file; sh_frp; sh_service; sh_sshd
 fi
 
 ufw status; export SYSTEMD_PAGER=""; service $name_sh status
