@@ -7,12 +7,7 @@ purple(){ echo -e "\e[35m$1\e[0m";}
 cyan(){ echo -e "\e[36m$1\e[0m";}
 readp(){ read -p "$(cyan "$1")" $2;}
 
-case $(uname -m) in
-  x86_64)     arch_sh="amd64";;
-  aarch64)    arch_sh="arm64";;
-  *)          red "未知系统！";;
-esac
-
+case $(uname -m) in amd64 | x86_64) arch_sh="amd64";; armv8 | aarch64) arch_sh="arm64";; *) red "未知系统！";; esac
 name_sh="frps"
 link_sh="https://github.com/fatedier/frp/releases/download"
 api_sh="$(curl -s https://api.github.com/repos/fatedier/frp/releases/latest)"
@@ -23,7 +18,7 @@ path_sh="/etc/aio/${name_sh}"
 grep_sh="$(ps -ef | grep $name_sh | grep -v grep | awk '{print $8}')"
 domain_sh="$(ls -l /etc/letsencrypt/live | awk '/^d/ {print $NF}')"
 
-sh_configfrp(){
+sh_frp(){
   cat > ${path_sh}/config.toml << TOML
 bindAddr = "0.0.0.0"
 bindPort = 60443
@@ -34,11 +29,7 @@ vhostHTTPSPort = 60443
 auth.method = "token"
 auth.token = "$token_sh"
 
-#webServer.addr = "0.0.0.0"
-#webServer.port = 60080
-#webServer.user = "$USERNAME"
-#webServer.password = "$PASSWORD"
-#subDomainHost = "$domain_sh"
+subDomainHost = "$domain_sh"
 
 transport.maxPoolCount = 10
 transport.tcpKeepalive = 7200
@@ -106,13 +97,20 @@ sh_sshd(){
 purple "\nMu"
 
 if [ -s ${path_sh}/${name_sh} ]; then
+  #version_sh="$(frp version | awk 'NR==1 {print $2}')"
   while true; do
-    purple "检测到已安装$name_sh。"
-	blue "1、升级"
-	blue "2、退出"
-	readp "请输入选项：" option_sh
-	case $option_sh in 1) sh_file; systemctl restart $name_sh break;; 2) break;; *) red "请重新输入！"; continue;; esac
+    #purple "检测到$version_sh版本。"
+    blue "1、升级"
+    blue "2、退出"
+    readp "请输入选项：" option_sh
+    case $option_sh in
+      1) sh_file; systemctl restart $name_sh; return;;
+      2) return;;
+      *) red "请重新输入！"; continue;;
+    esac
   done
+else
+  sh_domain; sh_file; sh_frp; sh_service; sh_sshd
 fi
 
 ufw status; export SYSTEMD_PAGER=""; service $name_sh status
