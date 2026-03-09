@@ -188,8 +188,7 @@ sh_xray(){
         "clients": [
           {
             "id": "$uuid_sh",
-            "flow": "xtls-rprx-vision",
-            "email": "xray@reality.vision"
+            "flow": "xtls-rprx-vision"
           }
         ],
         "decryption": "none",
@@ -225,8 +224,7 @@ sh_xray(){
         "clients": [
           {
             "id": "$uuid_sh",
-            "flow": "",
-            "email": "xray@reality.xhttp"
+            "flow": ""
           }
         ],
         "decryption": "none"
@@ -237,6 +235,47 @@ sh_xray(){
           "host": "",  // 服务端不验证 host 客户端玩法更多
           "mode": "auto",  // 服务端设置 auto 客户端玩法更多
           "path": "${public_sh}"
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls", "quic"],
+        "routeOnly": true
+      }
+    },
+    {
+      "port": 23710,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "$uuid_sh",
+            "flow": ""
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "kcp",
+        "mtu": 1350,
+        "tti": 30,
+        "uplinkCapacity": 100,
+        "downlinkCapacity": 200,
+        "congestion": false,
+        "readBufferSize": 5,
+        "writeBufferSize": 5,
+        "finalmask": {
+          "udp": [
+            {
+              "type": "header-utp"
+            },
+            {
+              "type": "mkcp-aes128gcm",
+              "settings": {
+              "password": "$uuid_sh"
+              }
+            }
+          ]
         }
       },
       "sniffing": {
@@ -327,7 +366,7 @@ sh_sshd(){
     echo -e "PermitRootLogin yes\nPubkeyAuthentication yes\nPasswordAuthentication no\nPort $sshd_sh" > /etc/ssh/sshd_config.d/sshd.conf
     systemctl restart ssh
     if [ -s /usr/lib/systemd/system/ssh.socket ]; then sed -i "s/22/$sshd_sh/g" /usr/lib/systemd/system/ssh.socket && systemctl daemon-reload && systemctl restart ssh.socket; fi
-    ufw allow $sshd_sh; ufw allow 80; ufw allow 443/tcp; ufw allow 443/udp; echo "y" | ufw enable >/dev/null
+    ufw allow $sshd_sh; ufw allow 80/tcp; ufw allow 80/udp; ufw allow 443/tcp; ufw allow 443/udp; ufw allow 23710/tcp; ufw allow 23710/udp; echo "y" | ufw enable >/dev/null
   fi
 }
 
