@@ -181,7 +181,7 @@ sh_xray(){
   },
   "inbounds": [
     {
-      "tag": "reality-vision",
+      "tag": "vision",
       "port": 443,
       "protocol": "vless",
       "settings": {
@@ -216,7 +216,7 @@ sh_xray(){
       }
     },
     {
-      "tag": "reality-xhttp",
+      "tag": "xhttp",
       "listen": "127.0.0.1",
       "port": 44308,
       "protocol": "vless",
@@ -244,6 +244,7 @@ sh_xray(){
       }
     },
     {
+      "tag": "mkcp",
       "port": 23710,
       "protocol": "vless",
       "settings": {
@@ -261,7 +262,7 @@ sh_xray(){
         "tti": 30,
         "uplinkCapacity": 100,
         "downlinkCapacity": 200,
-        "congestion": false,
+        "congestion": true,
         "readBufferSize": 5,
         "writeBufferSize": 5,
         "finalmask": {
