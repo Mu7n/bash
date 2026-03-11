@@ -11,8 +11,8 @@ readp(){ read -p "$(cyan "$1")" $2;}
 case $(uname -m) in amd64 | x86_64) arch_sh="64";; armv8 | aarch64) arch_sh="arm64-v8a";; i386 | i686) arch_sh="32";; *) red "未知系统！";; esac
 name_sh="xray"
 link_sh="https://github.com/XTLS/Xray-core/releases/download"
-api_sh="$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest)"
-tag_sh="$(echo "$api_sh" | grep '"tag_name"' | awk -F '"' '{print $4}')"
+api_sh="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
+tag_sh="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')"
 file_sh="Xray-linux-${arch_sh}.zip"
 url_sh="${link_sh}/${tag_sh}/${file_sh}"
 path_sh="/etc/aio/${name_sh}"
@@ -326,14 +326,16 @@ sh_file(){
       if unzip -t $file_sh; then
         break
       else
-        sleep 2; tag_sh=""; tag_sh="$(echo "$api_sh" | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/${tag_sh}/${file_sh}"
+        sleep 3
+        tag_sh=""
+        tag_sh="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/${tag_sh}/${file_sh}"
       fi
     done
     blue "$url_sh.dgst，正在下载。"
     curl -O -L -H 'Cache-Control: no-cache' $url_sh.dgst -#
     local_sh="$(sha256sum $file_sh | awk '{printf $1}')"
     check_sh="$(awk -F '= ' '/256=/ {print $2}' $file_sh.dgst)"
-    if [ $check_sh != $local_sh ]; then sleep 2; tag_sh=""; tag_sh="$(echo "$api_sh" | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/${tag_sh}/${file_sh}"; else blue "check！"; sh_unzip && break; fi
+    if [ $check_sh != $local_sh ]; then sleep 3; tag_sh=""; tag_sh="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/${tag_sh}/${file_sh}"; else blue "check！"; sh_unzip && break; fi
    done
 }
 
