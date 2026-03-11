@@ -1,5 +1,12 @@
 #!/bin/bash
 
+set -u
+red(){ echo -e "\e[31m$1\e[0m";}
+blue(){ echo -e "\e[34m$1\e[0m";}
+purple(){ echo -e "\e[35m$1\e[0m";}
+cyan(){ echo -e "\e[36m$1\e[0m";}
+readp(){ read -p "$(cyan "$1")" $2;}
+
 case $(uname -m) in amd64 | x86_64) arch_sh="64";; armv8 | aarch64) arch_sh="arm64-v8a";; i386 | i686) arch_sh="32";; *) red "未知系统！";; esac
 name_sh="xray"
 link_sh="https://github.com/XTLS/Xray-core/releases/download"
