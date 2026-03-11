@@ -422,7 +422,7 @@ sh_menuxray(){
   done
 }
 
-if ! type "nginx" "certbot" "unzip" "tar" "py3-qrcode" "ufw" >/dev/null 2>&1; then
+if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then
   blue "开始安装。"
   apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw
   sh_html; sh_domain; sh_file; sh_xray; sh_service; sh_cert; sh_nginx; sh_sshd
