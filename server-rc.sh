@@ -415,15 +415,15 @@ sh_menuxray(){
     readp "请输入选项：" option_sh
     case $option_sh in
       1) sh_file; rc-service $name_sh restart; return;;
-      2) if [ $dest_sh != $domain_sh ]; then sed -i "s/${dest_sh}/${domain_sh}/g" ${path_sh}/vless.json; rc-service $name_sh restart; purple "配置已修改。"; else cyan "reality vision"; purple "${reality_xtls}"; qrencode -m 1 -t UTF8i "${reality_xtls}"; cyan "\nreality xhttp"; purple "${reality_xhttp}"; qrencode -m 1 -t UTF8i "${reality_xhttp}"; break; fi; continue;;
+      2) if [ $dest_sh != $domain_sh ]; then sed -i "s/${dest_sh}/${domain_sh}/g" ${path_sh}/vless.json; rc-service $name_sh restart; purple "配置已修改。"; else cyan "reality vision"; purple "${reality_xtls}"; qr --ascii "${reality_xtls}"; cyan "\nreality xhttp"; purple "${reality_xhttp}"; qr --ascii "${reality_xhttp}"; break; fi; continue;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
   done
 }
 
-if ! type "nginx" "certbot" "unzip" "qrencode" "ufw" >/dev/null 2>&1; then
+if ! type "nginx" "certbot" "unzip" "tar" "py3-qrcode" "ufw" >/dev/null 2>&1; then
   blue "开始安装。"
-  apk update && apk add nginx certbot certbot-nginx unzip qrencode ufw
+  apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw
   sh_html; sh_domain; sh_file; sh_xray; sh_service; sh_cert; sh_nginx; sh_sshd
 fi
