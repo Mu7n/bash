@@ -315,7 +315,7 @@ start_pre() {
 }
 XRAY
   if [ ! -z $grep_sh ]; then pkill -9 $name_sh; fi
-  chmod 644 /etc/init.d/${name_sh}; rc-service $name_sh start; rc-update add $name_sh
+  chmod +x /etc/init.d/${name_sh}; rc-service $name_sh start; rc-update add $name_sh
 }
 
 sh_file(){
@@ -329,10 +329,11 @@ sh_file(){
         sleep 2; tag_sh=""; tag_sh="$(echo "$api_sh" | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/${tag_sh}/${file_sh}"
       fi
     done
+    blue "$url_sh.dgst，正在下载。"
     curl -O -L -H 'Cache-Control: no-cache' $url_sh.dgst -#
     local_sh="$(sha256sum $file_sh | awk '{printf $1}')"
     check_sh="$(awk -F '= ' '/256=/ {print $2}' $file_sh.dgst)"
-    if [ $check_sh != $local_sh ]; then sleep 2; tag_sh=""; tag_sh="$(echo "$api_sh" | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/${tag_sh}/${file_sh}"; else sh_unzip && break; fi
+    if [ $check_sh != $local_sh ]; then sleep 2; tag_sh=""; tag_sh="$(echo "$api_sh" | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/${tag_sh}/${file_sh}"; else blue "check！"; sh_unzip && break; fi
    done
 }
 
