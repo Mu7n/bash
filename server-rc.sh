@@ -326,7 +326,7 @@ sh_file(){
       if unzip -t $file_sh; then
         break
       else
-        sleep 3
+        sleep 5
         tag_sh=""
         tag_sh="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/${tag_sh}/${file_sh}"
       fi
@@ -335,7 +335,7 @@ sh_file(){
     curl -O -L -H 'Cache-Control: no-cache' $url_sh.dgst -#
     local_sh="$(sha256sum $file_sh | awk '{printf $1}')"
     check_sh="$(awk -F '= ' '/256=/ {print $2}' $file_sh.dgst)"
-    if [ $check_sh != $local_sh ]; then sleep 3; tag_sh=""; tag_sh="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/${tag_sh}/${file_sh}"; else blue "check！"; sh_unzip && break; fi
+    if [ $check_sh != $local_sh ]; then sleep 5; tag_sh=""; tag_sh="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/${tag_sh}/${file_sh}"; else blue "check！"; sh_unzip && break; fi
    done
 }
 
