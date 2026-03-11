@@ -285,7 +285,7 @@ sh_service(){
 name="${name_sh}"
 description="${name_sh} Service"
 
-supervisor=supervise
+supervisor=supervise-daemon
 respawn_delay=5
 respawn_max=2
 respawn_period=600
