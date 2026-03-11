@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env ash
+# shellcheck shell=dash
 
 set -u
 red(){ echo -e "\e[31m$1\e[0m";}
