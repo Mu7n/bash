@@ -427,3 +427,20 @@ if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then
   apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw
   sh_html; sh_domain; sh_file; sh_xray; sh_service; sh_cert; sh_nginx; sh_sshd
 fi
+
+purple "\nMu"
+
+while true; do
+  blue "1、Xray"
+  blue "2、Nginx"
+  blue "3、Exit"
+  readp "请输入选项：" option_sh
+  case $option_sh in
+    1) sh_menuxray; continue;;
+    2) sh_menunginx; continue;;
+    3) break;;
+    *) red "请重新输入！"; continue;;
+  esac
+done
+
+purple "\nEND！"
