@@ -296,8 +296,8 @@ extra_commands="checkconfig"
 
 confdir=${confdir:-"${path_sh}/"}
 command="${path_sh}/${name_sh}"
-command_args="run -confdir $confdir"
-required_files="$confdir"
+command_args="run -confdir \$confdir"
+required_files="\$confdir"
 
 depend() {
 	need net
@@ -306,8 +306,8 @@ depend() {
 }
 
 checkconfig() {
-	$command $command_args -test
-	eend $?
+	\$command \$command_args -test
+	eend \$?
 }
 
 start_pre() {
