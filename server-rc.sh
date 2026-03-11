@@ -414,6 +414,6 @@ sh_menuxray(){
 
 if ! type "nginx" "certbot" "unzip" "qrencode" "ufw" >/dev/null 2>&1; then
   blue "开始安装。"
-  apk update -y && apk add -y nginx certbot certbot-nginx unzip qrencode ufw
+  apk update -y && apk add nginx certbot certbot-nginx unzip qrencode ufw
   sh_html; sh_domain; sh_file; sh_xray; sh_service; sh_cert; sh_nginx; sh_sshd
 fi
