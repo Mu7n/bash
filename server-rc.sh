@@ -400,6 +400,7 @@ sh_salt(){
   rm -rf ${subpath_sh}/xclient/*
   rm -rf ${subpath_sh}/mclient/*
   user_sh="$(echo -n "${name_sh}${salt_sh}"$'\n' | md5sum | awk '{print $1}')"
+  cat ${subpath_sh}/mclient/mihomo >> ${subpath_sh}/mclient/${user_sh}
   cat ${subpath_sh}/xclient/xray >> ${subpath_sh}/xclient/${user_sh}
   base_sh="$(base64 -w 0 ${subpath_sh}/xclient/${user_sh})"
   echo "$base_sh" > ${subpath_sh}/xclient/${user_sh}
@@ -407,10 +408,60 @@ sh_salt(){
 
 sh_subscribe(){
   cat > ${subpath_sh}/xclient/xray << XSUB
-
+vless://${uuid_sh}@${dest_sh}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${dest_sh}&pbk=${public_sh}&sid=${shortid_sh}#reality xtls
+vless://${uuid_sh}@${dest_sh}:443?type=xhttp&path=${public_sh}&mode=auto&fp=chrome&security=reality&sni=${dest_sh}&pbk=${public_sh}&sid=${shortid_sh}#reality xhttp
+hysteria2://${uuid_sh}@${dest_sh}:23710?obfs=salamander&obfs-password=${uuid_sh}&insecure=30&sni=${dest_sh}&alpn=h3#hysteria2
 XSUB
   cat > ${subpath_sh}/mclient/mihomo << MSUB
-
+proxies:
+  - name: "reality xtls"
+    type: vless
+    server: $dest_sh
+    port: 443
+    uuid: $uuid_sh
+    flow: xtls-rprx-vision
+    network: tcp
+    tls: true
+    skip-cert-verify: false
+    servername: $dest_sh
+    reality-opts:
+      public-key: $public_sh
+      short-id: 1a2b3c4d5e6f
+    udp: true
+    packet-encoding: xudp
+    client-fingerprint: chrome
+  - name: "reality xhttp"
+    type: vless
+    server: $dest_sh
+    port: 443
+    uuid: $uuid_sh
+    network: xhttp
+    tls: true
+    skip-cert-verify: false
+    servername: $dest_sh
+    reality-opts:
+      public-key: $public_sh
+      short-id: 1a2b3c4d5e6f
+    xhttp-opts:
+      path: $uuid_sh
+      mode: auto
+    udp: true
+    packet-encoding: xudp
+    client-fingerprint: chrome
+  - name: "hysteria2"
+    type: hysteria2
+    server: $dest_sh
+    port: 23710
+    password: $uuid_sh
+    skip-cert-verify: false
+    sni: $dest_sh
+    alpn:
+      - h3
+    up: "100 Mbps"
+    down: "200 Mbps"
+    hop-interval: 30
+    obfs: salamander
+    obfs-password: $uuid_sh
 MSUB
 }
 
