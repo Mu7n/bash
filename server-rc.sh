@@ -16,6 +16,7 @@ tag_sh="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')"
 file_sh="Xray-linux-${arch_sh}.zip"
 url_sh="${link_sh}/${tag_sh}/${file_sh}"
 path_sh="/etc/aio/${name_sh}"
+subpath_sh="/etc/aio/subscribe"
 grep_sh="$(ps -ef | grep $name_sh | grep -v grep | awk '{print $8}')"
 
 sh_nginx(){
@@ -376,17 +377,39 @@ sh_sshd(){
   fi
 }
 
-sh_saltmd5(){
-  if
-  readp "请输入salt值，[enter]使用默认值" salt_sh
-  emailsalt="$(echo -n ${user_sh}${salt_sh}$'\n' | md5sum | awk '{print $1}')"
+sh_md5() {
+  local chars_sh="abcdefghijklmnopqrtuxyz"
+  local md5_sh=""
+  for i in {1..10}; do
+    echo "${i}" >/dev/null
+     md5_sh+="${chars_sh:RANDOM%${#chars_sh}:1}"
+  done
+  echo "${md5_sh}"
+}
+
+sh_salt(){
+  if [[ -f "${subpath_sh}/subscribe" && -n $(cat "${subpath_sh}/subscribe") ]]; then
+    salt_sh="$(cat ${subpath_sh}/subscribe)"
+  else
+    readp "请输入salt值，[enter]使用默认值" salt_sh
+  fi
+  if [[ -z "$salt_sh" ]]; then
+    salt_sh="$(sh_md5)"
+  fi
+  echo "$salt_sh" > ${subpath_sh}/subscribe
+  rm -rf ${subpath_sh}/xclient/*
+  rm -rf ${subpath_sh}/mclient/*
+  user_sh="$(echo -n "${name_sh}${salt_sh}"$'\n' | md5sum | awk '{print $1}')"
+  cat ${subpath_sh}/xclient/xray >> ${subpath_sh}/xclient/${user_sh}
+  base_sh="$(base64 -w 0 ${subpath_sh}/xclient/${user_sh})"
+  echo "$base_sh" > ${subpath_sh}/xclient/${user_sh}
 }
 
 sh_subscribe(){
-  cat > ${path_sh}/subscribe/xclient/${_sh} << XSUB
+  cat > ${subpath_sh}/xclient/xray << XSUB
 
 XSUB
-  cat > ${path_sh}/subcribe/mclient/${_sh} << MSUB
+  cat > ${subpath_sh}/mclient/mihomo << MSUB
 
 MSUB
 }
@@ -420,6 +443,8 @@ sh_menuxray(){
   ipv6_sh="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   reality_xtls="vless://${uuid_sh}@${dest_sh}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${dest_sh}&pbk=${public_sh}&sid=${shortid_sh}#reality xtls"
   reality_xhttp="vless://${uuid_sh}@${dest_sh}:443?type=xhttp&path=${public_sh}&mode=auto&fp=chrome&security=reality&sni=${dest_sh}&pbk=${public_sh}&sid=${shortid_sh}#reality xhttp"
+  #cyan "https://${domain_sh}/sub/xclient/${user_sh}\n"
+  #cyan "https://${domain_sh}/sub/mclient/${user_sh}\n"
   while true; do
     purple "检测到$version_sh版本。"
     blue "1、升级内核"
