@@ -91,9 +91,9 @@ server {
     server_name $domain_sh;
     ssl_certificate /etc/letsencrypt/live/${domain_sh}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${domain_sh}/privkey.pem;
-    location ~ ^/sub/(mihomo|xray|file)/(.*) {
+    location ~ ^/sub/(clash|xray|mihomo)/(.*) {
         default_type 'text/plain; charset=utf-8';
-        alias /etc/aio/subscribe/$1/$2;
+        alias /etc/aio/subscribe/\$1/\$2;
     }
     location /${public_sh} { #与 reality-xhttp 中 path 对应
         grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
