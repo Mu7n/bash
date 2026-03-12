@@ -256,6 +256,49 @@ sh_xray(){
         "destOverride": ["http", "tls", "quic"],
         "routeOnly": true
       }
+    },
+    {
+      "tag": "hysteria2",
+      "port": 2023,
+      "protocol": "hysteria",
+      "settings": {
+        "version": 2,
+        "clients": [
+          {
+            "auth": "$uuid_sh"
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "hysteria",
+        "hysteriaSettings": {
+          "version": 2
+        },
+        "security": "tls",
+        "tlsSettings": {
+          "alpn": ["h3"],
+          "certificates": [
+            {
+              "certificateFile": "/etc/letsencrypt/live/${domain_sh}/fullchain.pem",
+              "keyFile": "/etc/letsencrypt/live/${domain_sh}/privkey.pem"
+            }
+          ]
+        },
+        "finalmask": {
+          "udp": [
+            {
+              "type": "salamander",
+              "settings": {
+                "password": "$uuid_sh"
+              }
+            }
+          ],
+          "quicParams": {
+            "congestion": "force-brutal",
+            "brutalUp": "100mbps"
+          }
+        }
+      }
     }
   ],
   "outbounds": [
