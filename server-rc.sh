@@ -91,9 +91,9 @@ server {
     server_name $domain_sh;
     ssl_certificate /etc/letsencrypt/live/${domain_sh}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${domain_sh}/privkey.pem;
-    location ~ ^/sub/(clash|xray|mihomo)/(.*) {
+    location ~ ^/sub/(mclient|xclient)/(.*) {
         default_type 'text/plain; charset=utf-8';
-        alias /etc/aio/subscribe/\$1/\$2;
+        alias ${path_sh}/subscribe/\$1/\$2;
     }
     location /${public_sh} { #与 reality-xhttp 中 path 对应
         grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
@@ -374,6 +374,21 @@ sh_sshd(){
     if [ -s /usr/lib/systemd/system/ssh.socket ]; then sed -i "s/22/$sshd_sh/g" /usr/lib/systemd/system/ssh.socket && rc-service ssh.socket start; fi
     ufw allow $sshd_sh; ufw allow 80/tcp; ufw allow 80/udp; ufw allow 443/tcp; ufw allow 443/udp; ufw allow 23710/tcp; ufw allow 23710/udp; echo "y" | ufw enable >/dev/null
   fi
+}
+
+sh_saltmd5(){
+  if
+  readp "请输入salt值，[enter]使用默认值" salt_sh
+  emailsalt="$(echo -n ${user_sh}${salt_sh}$'\n' | md5sum | awk '{print $1}')"
+}
+
+sh_subscribe(){
+  cat > ${path_sh}/subscribe/xclient/${_sh} << XSUB
+
+XSUB
+  cat > ${path_sh}/subcribe/mclient/${_sh} << MSUB
+
+MSUB
 }
 
 sh_menunginx(){
