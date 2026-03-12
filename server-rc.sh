@@ -327,20 +327,14 @@ sh_file(){
     while true; do
       blue "$url_sh，正在下载。"
       curl -O -L -H 'Cache-Control: no-cache' $url_sh -#
-      if unzip -t $file_sh; then
-        break
-      else
-        sleep 5
-        tag_sh=""
-        tag_sh="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/${tag_sh}/${file_sh}"
-      fi
+      if unzip -t $file_sh; then break; else sleep 5 && tag_sh="" && tag_sh="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')" && url_sh="${link_sh}/${tag_sh}/${file_sh}"; fi
     done
     blue "$url_sh.dgst，正在下载。"
     curl -O -L -H 'Cache-Control: no-cache' $url_sh.dgst -#
     local_sh="$(sha256sum $file_sh | awk '{printf $1}')"
     check_sh="$(awk -F '= ' '/256=/ {print $2}' $file_sh.dgst)"
-    if [ $check_sh != $local_sh ]; then sleep 5; tag_sh=""; tag_sh="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/${tag_sh}/${file_sh}"; else blue "check！"; sh_unzip && break; fi
-   done
+    if [ $check_sh != $local_sh ]; then sleep 5 && tag_sh="" && tag_sh="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')" && url_sh="${link_sh}/${tag_sh}/${file_sh}"; else blue "check！"; sh_unzip && break; fi
+  done
 }
 
 sh_unzip(){
