@@ -259,7 +259,7 @@ sh_xray(){
     },
     {
       "tag": "hysteria2",
-      "port": 2023,
+      "port": 10723,
       "protocol": "hysteria",
       "settings": {
         "version": 2,
@@ -416,7 +416,7 @@ sh_sshd(){
     echo -e "PermitRootLogin yes\nPubkeyAuthentication yes\nPasswordAuthentication no\nPort $sshd_sh" > /etc/ssh/sshd_config.d/sshd.conf
     rc-service ssh restart
     if [ -s /usr/lib/systemd/system/ssh.socket ]; then sed -i "s/22/$sshd_sh/g" /usr/lib/systemd/system/ssh.socket && rc-service ssh.socket start; fi
-    ufw allow $sshd_sh; ufw allow 80/tcp; ufw allow 80/udp; ufw allow 443/tcp; ufw allow 443/udp; ufw allow 23710/tcp; ufw allow 23710/udp; echo "y" | ufw enable >/dev/null
+    ufw allow $sshd_sh; ufw allow 80/tcp; ufw allow 80/udp; ufw allow 443/tcp; ufw allow 443/udp; ufw allow 10723/tcp; ufw allow 10723/udp; ufw allow 23710/tcp; ufw allow 23710/udp; echo "y" | ufw enable >/dev/null
   fi
 }
 
@@ -453,7 +453,8 @@ sh_subscribe(){
   cat > ${subpath_sh}/xclient/xray << XSUB
 vless://${uuid_sh}@${dest_sh}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${dest_sh}&pbk=${public_sh}&sid=${shortid_sh}#reality xtls
 vless://${uuid_sh}@${dest_sh}:443?type=xhttp&path=${public_sh}&mode=auto&fp=chrome&security=reality&sni=${dest_sh}&pbk=${public_sh}&sid=${shortid_sh}#reality xhttp
-hysteria2://${uuid_sh}@${dest_sh}:23710?obfs=salamander&obfs-password=${uuid_sh}&insecure=30&sni=${dest_sh}&alpn=h3#hysteria2
+vless://${uuid_sh}@${dest_sh}:23710?&type=kcp&headerType=utp&seed=${uuid_sh}#mkcp
+hysteria2://${uuid_sh}@${dest_sh}:10723?obfs=salamander&obfs-password=${uuid_sh}&insecure=30&sni=${dest_sh}&alpn=h3#hysteria2
 XSUB
   cat > ${subpath_sh}/mclient/mihomo << MSUB
 proxies:
