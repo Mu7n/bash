@@ -8,11 +8,11 @@ cyan(){echo -e "\e[36m$1\e[0m";}
 readp(){read -p "$(cyan "$1")" $2;}
 
 if { [[ -f "/etc/issue" ]] && grep -qi "Alpine" /etc/issue; } || { [[ -f "/etc/os-release" ]] && grep -qi "ID=alpine" /etc/os-release; }; then
-  release="alpine"; install="apk add"; upgrade="apk update"; nginxpid="/run/nginx/nginx.pid"; nginxconf="/etc/nginx/http.d"
+  release="alpine"; install="apk add"; upgrade="apk update"; nginxpid="/run/nginx/nginx.pid"; nginxconf="/etc/nginx/http.d/default.conf"
 elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
-  release="debian"; install="apt -y install"; upgrade="apt update"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled"
+  release="debian"; install="apt -y install"; upgrade="apt update"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"
 elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
-  release="ubuntu"; install="apt -y install"; upgrade="apt update"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled"
+  release="ubuntu"; install="apt -y install"; upgrade="apt update"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"
 fi
 if [[ -z ${release} ]]; then red "未知系统！"; exit 0; fi
 case "$(uname -m)" in amd64 | x86_64) cpuarch="64";; armv8 | aarch64) cpuarch="arm64-v8a";; i386 | i686) cpuarch="32";; *) red "未知架构！"; exit 0;; esac
@@ -20,16 +20,16 @@ case "$(uname -m)" in amd64 | x86_64) cpuarch="64";; armv8 | aarch64) cpuarch="a
 servername="xray"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
 serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
-servertag="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')"
-serverfile="Xray-linux-${arch_sh}.zip"
-serverurl="${link_sh}/${tag_sh}/${file_sh}"
-serverpath="/etc/aio/${name_sh}"
+servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
+serverfile="Xray-linux-${cpuarch}.zip"
+serverurl="${serversite}/${servertag}/${serverfile}"
+serverpath="/etc/aio/${servername}"
 subscribepath="/etc/aio/subscribe"
 #serverid="$(ps -ef | grep $name_sh | grep -v grep | awk '{print $8}')"
 
-sh_nginx(){
+Nginxconfig(){
   cat > /etc/nginx/nginx.conf << 'CONFIG'
-pid /run/nginx/nginx.pid;
+pid nginx.pid;
 worker_processes auto;
 error_log /var/log/nginx/error.log;
 events {
@@ -57,10 +57,12 @@ http {
     ssl_prefer_server_ciphers on;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
-    include /etc/nginx/http.d/*.conf;
+    include /etc/nginx/http.d/default.conf;
+    include /etc/nginx/sites-enabled/default;
 }
 CONFIG
-  cat > /etc/nginx/http.d/default.conf << DEST
+  sed -i "s/nginx.pid/${nginxpid}/g" /etc/nginx/nginx.conf
+  cat > "$nginxcof" << DEST
 server {
     listen 80;
     listen [::]:80;
@@ -77,10 +79,10 @@ server {
     listen 127.0.0.1:44380 ssl http2 proxy_protocol;
     set_real_ip_from unix:;
     real_ip_header proxy_protocol;
-    server_name cdn$domain_sh; #修改为 CDN 域名
-    ssl_certificate /etc/letsencrypt/live/${domain_sh}/fullchain.pem; #修改为 CDN 域名证书
-    ssl_certificate_key /etc/letsencrypt/live/${domain_sh}/privkey.pem; #修改为 CDN 域名证书
-    location /${public_sh} { #与 reality-xhttp 中 path 对应
+    server_name cdn$serverdomain; #修改为 CDN 域名
+    ssl_certificate /etc/letsencrypt/live/${serverdomain}/fullchain.pem; #修改为 CDN 域名证书
+    ssl_certificate_key /etc/letsencrypt/live/${serverdomain}/privkey.pem; #修改为 CDN 域名证书
+    location /${xpublic} { #与 reality-xhttp 中 path 对应
         grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
         grpc_set_header Host \$host;
         grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -97,14 +99,14 @@ server {
     listen 127.0.0.1:44380 ssl http2 proxy_protocol;
     set_real_ip_from unix:;
     real_ip_header proxy_protocol;
-    server_name $domain_sh;
-    ssl_certificate /etc/letsencrypt/live/${domain_sh}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${domain_sh}/privkey.pem;
+    server_name $serverdomain;
+    ssl_certificate /etc/letsencrypt/live/${serverdomain}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${serverdomain}/privkey.pem;
     location ~ ^/sub/(mclient|xclient)/(.*) {
         default_type 'text/plain; charset=utf-8';
-        alias ${path_sh}/subscribe/\$1/\$2;
+        alias ${subscribepath}/subscribe/\$1/\$2;
     }
-    location /${public_sh} { #与 reality-xhttp 中 path 对应
+    location /${xpublic} { #与 reality-xhttp 中 path 对应
         grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
         grpc_set_header Host \$host;
         grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -123,12 +125,12 @@ DEST
   nginx -t && nginx -s reload && purple "Nginx配置完成！"
 }
 
-sh_xray(){
-  uuid_sh="$(xray uuid)"
-  x25519_sh="$(xray x25519)"
-  private_sh="$(echo "$x25519_sh" | grep 'PrivateKey' | awk '{print $2}')"
-  public_sh="$(echo "$x25519_sh" | grep 'Password' | awk '{print $2}')"
-  cat > ${path_sh}/vless.json << XTLSREALITYXHTTP
+Xrayconfig(){
+  xuuid="$(xray uuid)"
+  x25519="$(xray x25519)"
+  xprivate="$(echo "$x25519" | grep 'PrivateKey' | awk '{print $2}')"
+  xpublic="$(echo "$x25519" | grep 'Password' | awk '{print $2}')"
+  cat > ${serverpath}/vless.json << XTLSREALITYXHTTP
 {
   "log": {
     "loglevel": "warning",
@@ -167,7 +169,7 @@ sh_xray(){
       "settings": {
         "clients": [
           {
-            "id": "$uuid_sh",
+            "id": "$xuuid",
             "flow": "xtls-rprx-vision"
           }
         ],
@@ -184,8 +186,8 @@ sh_xray(){
         "realitySettings": {
           "target": 44380,  //转发 Nginx 监听进程
           "xver": 1,
-          "serverNames": ["$domain_sh"],
-          "privateKey": "$private_sh",
+          "serverNames": ["$serverdomain"],
+          "privateKey": "$xprivate",
           "shortIds": ["1a2b3c4d5e6f"]
         }
       },
@@ -203,7 +205,7 @@ sh_xray(){
       "settings": {
         "clients": [
           {
-            "id": "$uuid_sh",
+            "id": "$xuuid",
             "flow": ""
           }
         ],
@@ -214,7 +216,7 @@ sh_xray(){
         "xhttpSettings": {
           "host": "",  // 服务端不验证 host 客户端玩法更多
           "mode": "auto",  // 服务端设置 auto 客户端玩法更多
-          "path": "${public_sh}"
+          "path": "${xpublic}"
         }
       },
       "sniffing": {
@@ -230,7 +232,7 @@ sh_xray(){
       "settings": {
         "clients": [
           {
-            "id": "$uuid_sh",
+            "id": "$xuuid",
             "flow": ""
           }
         ],
@@ -238,7 +240,7 @@ sh_xray(){
       },
       "streamSettings": {
         "network": "kcp",
-        "mtu": 1350,
+        "mtu": 900,
         "tti": 30,
         "uplinkCapacity": 100,
         "downlinkCapacity": 200,
@@ -253,7 +255,7 @@ sh_xray(){
             {
               "type": "mkcp-aes128gcm",
               "settings": {
-              "password": "$uuid_sh"
+              "password": "$xuuid"
               }
             }
           ]
@@ -273,7 +275,7 @@ sh_xray(){
         "version": 2,
         "clients": [
           {
-            "auth": "$uuid_sh"
+            "auth": "$xuuid"
           }
         ]
       },
@@ -287,8 +289,8 @@ sh_xray(){
           "alpn": ["h3"],
           "certificates": [
             {
-              "certificateFile": "/etc/letsencrypt/live/${domain_sh}/fullchain.pem",
-              "keyFile": "/etc/letsencrypt/live/${domain_sh}/privkey.pem"
+              "certificateFile": "/etc/letsencrypt/live/${serverdomain}/fullchain.pem",
+              "keyFile": "/etc/letsencrypt/live/${serverdomain}/privkey.pem"
             }
           ]
         },
@@ -297,7 +299,7 @@ sh_xray(){
             {
               "type": "salamander",
               "settings": {
-                "password": "$uuid_sh"
+                "password": "$xuuid"
               }
             }
           ],
@@ -334,47 +336,59 @@ sh_xray(){
 XTLSREALITYXHTTP
 }
 
-sh_service(){
-  cat > /etc/init.d/${name_sh} << XRAY
+Systemservice(){
+  if [ "$release" == alpine ]; then
+    cat > /etc/init.d/${servername} << XRAY
 #!/sbin/openrc-run
 
-name="${name_sh}"
-description="${name_sh} Service"
-
+name="$servername"
+description="$servername Service"
 supervisor=supervise-daemon
 respawn_delay=5
 respawn_max=2
 respawn_period=600
-
 pidfile="/run/\${RC_SVCNAME}.pid"
 capabilities="^cap_net_bind_service,^cap_net_admin,^cap_net_raw"
 extra_commands="checkconfig"
-
-confdir=${confdir:-"${path_sh}/"}
-command="${path_sh}/${name_sh}"
+confdir=${confdir:-"${serverpath}/"}
+command="${serverpath}/${servername}"
 command_args="run -confdir \$confdir"
 required_files="\$confdir"
-
 depend() {
 	need net
 	want dns ntp-client
 	after firewall
 }
-
 checkconfig() {
 	\$command \$command_args -test
 	eend \$?
 }
-
 start_pre() {
 	checkconfig || return 1
 }
 XRAY
-  if [ ! -z $grep_sh ]; then pkill -9 $name_sh; fi
-  chmod +x /etc/init.d/${name_sh}; rc-service $name_sh start; rc-update add $name_sh
+    chmod +x /etc/init.d/${servername}; rc-update add $servername; rc-service start $servername
+  elif
+    cat > /etc/systemd/system/${servername}.service << XRAY
+[Unit]
+Description=$servername Service
+After=network.target nss-lookup.target
+[Service]
+ExecStart=${serverpath}/${servername} run -confdir $serverpath
+Restart=on-failure
+RestartPreventExitStatus=23
+LimitNPROC=10000
+LimitNOFILE=1000000
+RuntimeDirectory=$servername
+RuntimeDirectoryMode=0755
+[Install]
+WantedBy=multi-user.target
+XRAY
+    chmod 644 /etc/systemd/system/${servername}.service; systemctl daemon-reload; systemctl enable $servername; systemctl start $servername
+  fi
 }
 
-sh_file(){
+Downloadfile(){
   while true; do
     while true; do
       blue "$url_sh，正在下载。"
