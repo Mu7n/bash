@@ -1,23 +1,29 @@
-#!/usr/bin/env ash
-# shellcheck shell=dash
+#!/usr/bin/env bash
 
 set -u
-red(){ echo -e "\e[31m$1\e[0m";}
-blue(){ echo -e "\e[34m$1\e[0m";}
-purple(){ echo -e "\e[35m$1\e[0m";}
-cyan(){ echo -e "\e[36m$1\e[0m";}
-readp(){ read -p "$(cyan "$1")" $2;}
-
-case $(uname -m) in amd64 | x86_64) arch_sh="64";; armv8 | aarch64) arch_sh="arm64-v8a";; i386 | i686) arch_sh="32";; *) red "未知系统！";; esac
-name_sh="xray"
-link_sh="https://github.com/XTLS/Xray-core/releases/download"
-api_sh="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
-tag_sh="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')"
-file_sh="Xray-linux-${arch_sh}.zip"
-url_sh="${link_sh}/${tag_sh}/${file_sh}"
-path_sh="/etc/aio/${name_sh}"
-subpath_sh="/etc/aio/subscribe"
-grep_sh="$(ps -ef | grep $name_sh | grep -v grep | awk '{print $8}')"
+red(){echo -e "\e[31m$1\e[0m";}
+blue(){echo -e "\e[34m$1\e[0m";}
+purple(){echo -e "\e[35m$1\e[0m";}
+cyan(){echo -e "\e[36m$1\e[0m";}
+readp(){read -p "$(cyan "$1")" $2;}
+if { [[ -f "/etc/issue" ]] && grep -qi "Alpine" /etc/issue; } || { [[ -f "/etc/os-release" ]] && grep -qi "ID=alpine" /etc/os-release; }; then
+  release="alpine"; install="apk add"; upgrade="apk update"; nginxpid="/run/nginx/nginx.pid"; nginxconf="/etc/nginx/http.d"
+elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
+  release="debian"; install="apt -y install"; upgrade="apt update"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled"
+elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
+  release="ubuntu"; install="apt -y install"; upgrade="apt update"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled"
+fi
+if [[ -z ${release} ]]; then red "未知系统！"; exit 0; fi
+case "$(uname -m)" in amd64 | x86_64) cpuarch="64";; armv8 | aarch64) cpuarch="arm64-v8a";; i386 | i686) cpuarch="32";; *) red "未知架构！"; exit 0;; esac
+servername="xray"
+serversite="https://github.com/XTLS/Xray-core/releases/download"
+serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
+servertag="$(curl -sf $api_sh | grep '"tag_name"' | awk -F '"' '{print $4}')"
+serverfile="Xray-linux-${arch_sh}.zip"
+serverurl="${link_sh}/${tag_sh}/${file_sh}"
+serverpath="/etc/aio/${name_sh}"
+serversubpath="/etc/aio/subscribe"
+#serverid="$(ps -ef | grep $name_sh | grep -v grep | awk '{print $8}')"
 
 sh_nginx(){
   cat > /etc/nginx/nginx.conf << 'CONFIG'
