@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 
 set -u
-red(){  echo -e "\e[31m$1\e[0m";}
-blue(){  echo -e "\e[34m$1\e[0m";}
-purple(){  echo -e "\e[35m$1\e[0m";}
-cyan(){  echo -e "\e[36m$1\e[0m";}
-readp(){  read -p "$(cyan "$1")" $2;}
 
 if { [[ -f "/etc/issue" ]] && grep -qi "Alpine" /etc/issue; } || { [[ -f "/etc/os-release" ]] && grep -qi "ID=alpine" /etc/os-release; }; then
   release="alpine"; service="rc-service"; nginxpid="/run/nginx/nginx.pid"; nginxconf="/etc/nginx/http.d/default.conf"; if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
@@ -14,8 +9,14 @@ elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os
 elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
   release="ubuntu"; service="service"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"; if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
 fi
-
 if [[ -z "$release" ]]; then red "未知系统！"; exit 0; else case "$(uname -m)" in amd64 | x86_64) serverarch="64";; armv8 | aarch64) serverarch="arm64-v8a";; i386 | i686) serverarch="32";; *) red "未知架构！"; exit 0;; esac fi
+
+red(){  echo -e "\e[31m$1\e[0m";}
+blue(){  echo -e "\e[34m$1\e[0m";}
+purple(){  echo -e "\e[35m$1\e[0m";}
+cyan(){  echo -e "\e[36m$1\e[0m";}
+readp(){  read -p "$(cyan "$1")" $2;}
+reservice(){  $service $1 restart}
 
 servername="xray"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
@@ -389,7 +390,7 @@ Download(){
     zipsha="$(sha256sum $serverfile | awk '{printf $1}')"
     dgstsha="$(awk -F '= ' '/256=/ {print $2}' $serverfile.dgst)"
     if [ "$dgstsha" != "$zipsha" ]; then sleep 5 && servertag="" && servertag="$(curl -sf $serverapi | grep '"tag_name"' | awk -F '"' '{print $4}')" && serverurl="${serversite}/${servertag}/${serverfile}"; else blue "check！"; Decompress && break; fi
-    if [ -s "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then ${service} ${servername} restart; fi
+    if [ -f "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then reservice ${servername} restart; fi
   done
 }
 
