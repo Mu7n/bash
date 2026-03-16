@@ -384,7 +384,7 @@ Download(){
     while true; do
       blue "$serverurl，正在下载。"
       curl -O -L -H 'Cache-Control: no-cache' $serverurl -#
-      if unzip -t $serverfile; then break; else sleep 5 && servertag="" && servertag="$(curl -sf $serverapi | grep '"tag_name"' | awk -F '"' '{print $4}')" && serverurl="${serversite}/${servertag}/${serverfile}"; fi
+      if unzip -t $serverfile; then break; else sleep 15 && servertag="" && servertag="$(curl -sf $serverapi | grep '"tag_name"' | awk -F '"' '{print $4}')" && serverurl="${serversite}/${servertag}/${serverfile}"; fi
     done
     blue "$serverurl.dgst，正在下载。"
     curl -O -L -H 'Cache-Control: no-cache' $serverurl.dgst -#
