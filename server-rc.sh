@@ -572,7 +572,7 @@ Service
 Cert
 Nginx
 SaltMD5
-SSHD
+#SSHD
 
 purple "\nMu"
 
@@ -580,7 +580,7 @@ while true; do
   xversion="$(xray version | awk 'NR==1 {print $2}')"
   xdomain="$(ls -l /etc/letsencrypt/live | awk '/^d/ {print $NF}')"
   xdest="$(grep "serverNames" ${serverpath}/vless.json | awk -F '"' '{print $4}')"
-  xuser="$(cat ${subscribepath}/subscribe)"
+  xuser="$(ls -l ${subscribepath}/xclient | awk '{print $1}')"
   subscribexurl="https://${xdomain}/sub/xclient/${xuser}"
   subscribemurl="https://${xdomain}/sub/mclient/${xuser}"
   blue "1、Xray"
