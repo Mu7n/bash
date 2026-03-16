@@ -57,11 +57,11 @@ http {
     ssl_prefer_server_ciphers on;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
-    include /etc/nginx/http.d/default.conf;
-    include /etc/nginx/sites-enabled/default;
+    include /etc/nginx;
 }
 CONFIG
   sed -i "s/nginx.pid/${nginxpid}/g" /etc/nginx/nginx.conf
+  sed -i "s//etc/nginx/${nginxconf}/g" $nginxconf
   cat > $nginxconf << DEST
 server {
     listen 80;
@@ -331,7 +331,6 @@ Service(){
   if [ "$release" == alpine ]; then
     cat > /etc/init.d/${servername} << INITD
 #!/sbin/openrc-run
-
 name="$servername"
 description="$servername Service"
 supervisor=supervise-daemon
@@ -450,6 +449,9 @@ SaltMD5(){
   if [[ -z "$serversalt" ]]; then
     serversalt="$(RandomMD5)"
   fi
+  mkdir -p -m 644 $subscribepath
+  mkdir -p -m 644 $subscribepath/xclient
+  mkdir -p -m 644 $subscribepath/mclient
   echo "$serversalt" > ${subscribepath}/subscribe
   rm -rf ${subscribepath}/xclient/*
   rm -rf ${subscribepath}/mclient/*
