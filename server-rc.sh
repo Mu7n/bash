@@ -599,5 +599,3 @@ while true; do
     *) red "请重新输入！"; continue;;
   esac
 done
-
-purple "\nEND！"
