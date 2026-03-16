@@ -8,11 +8,11 @@ cyan(){echo -e "\e[36m$1\e[0m";}
 readp(){read -p "$(cyan "$1")" $2;}
 
 if { [[ -f "/etc/issue" ]] && grep -qi "Alpine" /etc/issue; } || { [[ -f "/etc/os-release" ]] && grep -qi "ID=alpine" /etc/os-release; }; then
-  release="alpine"; nginxpid="/run/nginx/nginx.pid"; nginxconf="/etc/nginx/http.d/default.conf"; if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
+  release="alpine"; service="rc-service"; nginxpid="/run/nginx/nginx.pid"; nginxconf="/etc/nginx/http.d/default.conf"; if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
 elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
-  release="debian"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"; if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
+  release="debian"; service="service"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"; if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
 elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
-  release="ubuntu"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"; if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
+  release="ubuntu"; service="service"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"; if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
 fi
 
 if [[ -z "$release" ]]; then red "未知系统！"; exit 0; else case "$(uname -m)" in amd64 | x86_64) serverarch="64";; armv8 | aarch64) serverarch="arm64-v8a";; i386 | i686) serverarch="32";; *) red "未知架构！"; exit 0;; esac; fi
@@ -134,8 +134,8 @@ Xray(){
 {
   "log": {
     "loglevel": "warning",
-    "access": "${path_sh}/access.log",
-    "error": "${path_sh}/error.log"
+    "access": "${serverpath}/access.log",
+    "error": "${serverpath}/error.log"
   },
   "dns": {
     "servers": [
@@ -148,15 +148,6 @@ Xray(){
     "rules": [
       {
         "ip": ["geoip:cn"],
-        "outboundTag": "block"
-      },
-      {
-        "domain": ["geosite:category-ads-all"],
-        "outboundTag": "block"
-      },
-      {
-        "type": "field",
-        "protocol": ["bittorrent"],
         "outboundTag": "block"
       }
     ]
@@ -367,7 +358,7 @@ start_pre() {
 	checkconfig || return 1
 }
 XRAY
-    chmod +x /etc/init.d/${servername}; rc-update add $servername; rc-service start $servername
+    chmod +x /etc/init.d/${servername}; rc-update add $servername; $service $servername start
   elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then
     cat > /etc/systemd/system/${servername}.service << XRAY
 [Unit]
@@ -384,7 +375,7 @@ RuntimeDirectoryMode=0755
 [Install]
 WantedBy=multi-user.target
 XRAY
-    chmod 644 /etc/systemd/system/${servername}.service; systemctl daemon-reload; systemctl enable $servername; systemctl start $servername
+    chmod 644 /etc/systemd/system/${servername}.service; systemctl daemon-reload; $service $servername enable; $service $servername start
   fi
 }
 
@@ -400,7 +391,7 @@ Download(){
     zipsha="$(sha256sum $serverfile | awk '{printf $1}')"
     dgstsha="$(awk -F '= ' '/256=/ {print $2}' $serverfile.dgst)"
     if [ "$dgstsha" != "$zipsha" ]; then sleep 5 && servertag="" && servertag="$(curl -sf $serverapi | grep '"tag_name"' | awk -F '"' '{print $4}')" && serverurl="${serversite}/${servertag}/${serverfile}"; else blue "check！"; Decompress && break; fi
-    if [ -f "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then if [ "$release" == alpine ]; then rc-service $servername restart; elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then systemctl restart $servername; fi; fi
+    if [ -f "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then $service $servername restart fi
   done
 }
 
@@ -434,11 +425,7 @@ SSHD(){
     readp "请输入SSH端口：" serversshd
     purple "SSH端口：$serversshd"
     echo -e "PermitRootLogin yes\nPubkeyAuthentication yes\nPasswordAuthentication no\nPort $serversshd" > /etc/ssh/sshd_config.d/sshd.conf
-    if [ "$release" == alpine ]; then
-      rc-service ssh restart
-    elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then
-      systemctl restart ssh
-    fi
+    $service ssh restart
     if [ -f /usr/lib/systemd/system/ssh.socket ]; then sed -i "s/22/$serversshd/g" /usr/lib/systemd/system/ssh.socket && systemctl restart ssh.socket; fi
     ufw allow $serversshd; ufw allow 80/tcp; ufw allow 80/udp; ufw allow 443/tcp; ufw allow 443/udp; ufw allow 10723/tcp; ufw allow 10723/udp; ufw allow 23710/tcp; ufw allow 23710/udp; echo "y" | ufw enable >/dev/null
   fi
@@ -535,7 +522,7 @@ MSUB
 
 MenuNginx(){
   xdomain="$(ls -l /etc/letsencrypt/live | awk '/^d/ {print $NF}')"
-  xpublic="$(grep '"path"' ${path_sh}/vless.json | awk -F '"' '{print $4}')"
+  xpublic="$(grep '"path"' ${serverpath}/vless.json | awk -F '"' '{print $4}')"
   while true; do
     purple "检测到$xdomain证书。"
     blue "1、续签证书"
@@ -560,10 +547,9 @@ MenuXray(){
   xsid="$(grep '"shortIds"' ${serverpath}/vless.json | awk -F '"' '{print $4}')"
   xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
-  #reality_xtls="vless://${uuid_sh}@${dest_sh}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${dest_sh}&pbk=${public_sh}&sid=${shortid_sh}#reality xtls"
-  #reality_xhttp="vless://${uuid_sh}@${dest_sh}:443?type=xhttp&path=${public_sh}&mode=auto&fp=chrome&security=reality&sni=${dest_sh}&pbk=${public_sh}&sid=${shortid_sh}#reality xhttp"
-  #cyan "https://${xdomain}/sub/xclient/${serveruser}\n"
-  #cyan "https://${xdomain}/sub/mclient/${serveruser}\n"
+  xuser="$(ls -l ${subscribepath}/xclient/xray | awk '/^d/ {print $NF}'"
+  subscribexurl="https://${xdomain}/sub/xclient/${xuser}"
+  subscribemurl="https://${xdomain}/sub/mclient/${xuser}"
   while true; do
     purple "检测到$xversion版本。"
     blue "1、升级内核"
@@ -572,7 +558,16 @@ MenuXray(){
     readp "请输入选项：" option
     case "$option" in
       1) Download; return;;
-      2) if [ "$xdest" != "$xdomain" ]; then sed -i "s/${xdest}/${xdomain}/g" ${serverpath}/vless.json; if [ "$release" == alpine ]; then rc-service $servername restart; elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then systemctl restart $servername; fi; purple "配置已修改。"; else cyan "$subscribexurl"; qr --ascii "$subscribexurl"; cyan "\n$subscribemurl"; qr --ascii "$subscribemurl"; break; fi; continue;;
+      2) if [ "$xdest" != "$xdomain" ]; then
+           sed -i "s/${xdest}/${xdomain}/g" ${serverpath}/vless.json
+           $service $servername restart
+           purple "配置已修改。"
+         else
+           cyan "$subscribexurl"; qr --ascii "$subscribexurl"
+           cyan "$subscribemurl"; qr --ascii "$subscribemurl"
+           break
+         fi
+         continue;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
@@ -585,6 +580,9 @@ Xray
 Service
 Cert
 Nginx
+Subscribe
+RandomMD5
+SaltMD5
 SSHD
 
 purple "\nMu"
