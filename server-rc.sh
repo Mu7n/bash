@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 set -u
-red(){ echo -e "\e[31m$1\e[0m";}
-blue(){ echo -e "\e[34m$1\e[0m";}
-purple(){ echo -e "\e[35m$1\e[0m";}
-cyan(){ echo -e "\e[36m$1\e[0m";}
-readp(){ read -p "$(cyan "$1")" $2;}
+red(){  echo -e "\e[31m$1\e[0m";}
+blue(){  echo -e "\e[34m$1\e[0m";}
+purple(){  echo -e "\e[35m$1\e[0m";}
+cyan(){  echo -e "\e[36m$1\e[0m";}
+readp(){  read -p "$(cyan "$1")" $2;}
 
 if { [[ -f "/etc/issue" ]] && grep -qi "Alpine" /etc/issue; } || { [[ -f "/etc/os-release" ]] && grep -qi "ID=alpine" /etc/os-release; }; then
   release="alpine"; service="rc-service"; nginxpid="/run/nginx/nginx.pid"; nginxconf="/etc/nginx/http.d/default.conf"; if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
@@ -547,7 +547,7 @@ MenuXray(){
   xsid="$(grep '"shortIds"' ${serverpath}/vless.json | awk -F '"' '{print $4}')"
   xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
-  xuser="$(ls -l ${subscribepath}/xclient/xray | awk '/^d/ {print $NF}'"
+  xuser="$(ls -l ${subscribepath}/xclient/xray | awk '/^d/ {print $NF}')"
   subscribexurl="https://${xdomain}/sub/xclient/${xuser}"
   subscribemurl="https://${xdomain}/sub/mclient/${xuser}"
   while true; do
@@ -581,7 +581,6 @@ Service
 Cert
 Nginx
 Subscribe
-RandomMD5
 SaltMD5
 SSHD
 
