@@ -16,7 +16,6 @@ blue(){  echo -e "\e[34m$1\e[0m";}
 purple(){  echo -e "\e[35m$1\e[0m";}
 cyan(){  echo -e "\e[36m$1\e[0m";}
 readp(){  read -p "$(cyan "$1")" $2;}
-REservice(){  $service $1 restart;}
 
 servername="xray"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
@@ -328,8 +327,9 @@ XTLSREALITYXHTTP
 }
 
 Service(){
-  if [ "$release" == alpine ]; then
-    cat > /etc/init.d/${servername} << INITD
+  if [ -f "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then
+    if [ "$release" == alpine ]; then
+      cat > /etc/init.d/${servername} << INITD
 #!/sbin/openrc-run
 name="$servername"
 description="$servername Service"
@@ -357,9 +357,9 @@ start_pre() {
 	checkconfig || return 1
 }
 INITD
-    chmod +x /etc/init.d/${servername}; rc-update add $servername; $service $servername start
-  elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then
-    cat > /etc/systemd/system/${servername}.service << SYSTEM
+      chmod +x /etc/init.d/${servername}; rc-update add $servername; $service $servername start
+    elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then
+      cat > /etc/systemd/system/${servername}.service << SYSTEM
 [Unit]
 Description=$servername Service
 After=network.target nss-lookup.target
@@ -374,7 +374,8 @@ RuntimeDirectoryMode=0755
 [Install]
 WantedBy=multi-user.target
 SYSTEM
-    chmod 644 /etc/systemd/system/${servername}.service; systemctl daemon-reload; $service $servername enable; $service $servername start
+      chmod 644 /etc/systemd/system/${servername}.service; systemctl daemon-reload; $service $servername enable; $service $servername start
+    fi
   fi
 }
 
@@ -390,7 +391,7 @@ Download(){
     zipsha="$(sha256sum $serverfile | awk '{printf $1}')"
     dgstsha="$(awk -F '= ' '/256=/ {print $2}' $serverfile.dgst)"
     if [ "$dgstsha" != "$zipsha" ]; then sleep 5 && servertag="" && servertag="$(curl -sf $serverapi | grep '"tag_name"' | awk -F '"' '{print $4}')" && serverurl="${serversite}/${servertag}/${serverfile}"; else blue "check！"; Decompress && break; fi
-    if [ -f "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then REservice ${servername}; fi
+    if [ -f "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then $service $servername restart; fi
   done
 }
 
