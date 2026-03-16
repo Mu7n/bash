@@ -459,20 +459,20 @@ SaltMD5(){
   rm -rf ${subscribepath}/xclient/*
   rm -rf ${subscribepath}/mclient/*
   serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
-  cat ${subscribepath}/mihomo.json >> ${subscribepath}/mclient/${serveruser}
-  cat ${subscribepath}/xray.json >> ${subscribepath}/xclient/${serveruser}
+  cat ${subscribepath}/mihomo >> ${subscribepath}/mclient/${serveruser}
+  cat ${subscribepath}/xray >> ${subscribepath}/xclient/${serveruser}
   serverbase="$(base64 -w 0 ${subscribepath}/xclient/${serveruser})"
   echo "$serverbase" > ${subscribepath}/xclient/${serveruser}
 }
 
 Subscribe(){
-  cat > ${subscribepath}/xray.json << XSUB
+  cat > ${subscribepath}/xray << XSUB
 vless://${xuuid}@${xdest}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xtls
 vless://${xuuid}@${xdest}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xhttp
 vless://${xuuid}@${xdest}:23710?&type=kcp&headerType=utp&seed=${xuuid}#mkcp
 hysteria2://${xuuid}@${xdest}:10723?obfs=salamander&obfs-password=${xuuid}&insecure=30&sni=${xdest}&alpn=h3#hysteria2
 XSUB
-  cat > ${subscribepath}/mihomo.json << MSUB
+  cat > ${subscribepath}/mihomo << MSUB
 proxies:
   - name: "reality xtls"
     type: vless
@@ -552,7 +552,7 @@ MenuXray(){
   xsid="$(grep '"shortIds"' ${serverpath}/vless.json | awk -F '"' '{print $4}')"
   xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
-  xuser="$(ls -l ${subscribepath}/xclient/xray | awk '/^d/ {print $NF}')"
+  xuser="$(cat ${subscribepath}/subscribe)"
   subscribexurl="https://${xdomain}/sub/xclient/${xuser}"
   subscribemurl="https://${xdomain}/sub/mclient/${xuser}"
   while true; do
@@ -568,7 +568,6 @@ MenuXray(){
            $service $servername restart
            purple "配置已修改。"
          else
-           Subscribe
            SaltMD5
            cyan "$subscribexurl"; qr --ascii "$subscribexurl"
            cyan "$subscribemurl"; qr --ascii "$subscribemurl"
@@ -584,6 +583,7 @@ MenuXray(){
 Domain
 Download
 Xray
+Subscribe
 Service
 Cert
 Nginx
