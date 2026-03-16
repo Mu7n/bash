@@ -15,7 +15,7 @@ elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os
   release="ubuntu"; service="service"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"; if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
 fi
 
-if [[ -z "$release" ]]; then red "未知系统！"; exit 0; else case "$(uname -m)" in amd64 | x86_64) serverarch="64";; armv8 | aarch64) serverarch="arm64-v8a";; i386 | i686) serverarch="32";; *) red "未知架构！"; exit 0;; esac; fi
+if [[ -z "$release" ]]; then red "未知系统！"; exit 0; else case "$(uname -m)" in amd64 | x86_64) serverarch="64";; armv8 | aarch64) serverarch="arm64-v8a";; i386 | i686) serverarch="32";; *) red "未知架构！"; exit 0;; esac fi
 
 servername="xray"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
