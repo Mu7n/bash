@@ -448,24 +448,32 @@ SaltMD5(){
     serversalt="$(cat ${subscribepath}/subscribe)"
   else
     readp "请输入salt值，[enter]使用默认值" serversalt
+    echo "$serversalt" > ${subscribepath}/subscribe
   fi
   if [[ -z "$serversalt" ]]; then
     serversalt="$(RandomMD5)"
+    echo "$serversalt" > ${subscribepath}/subscribe
   fi
-  mkdir -p -m 644 $subscribepath
-  mkdir -p -m 644 $subscribepath/xclient
-  mkdir -p -m 644 $subscribepath/mclient
-  echo "$serversalt" > ${subscribepath}/subscribe
   rm -rf ${subscribepath}/xclient/*
   rm -rf ${subscribepath}/mclient/*
   serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
   cat ${subscribepath}/mihomo >> ${subscribepath}/mclient/${serveruser}
-  cat ${subscribepath}/xray >> ${subscribepath}/xclient/${serveruser}
-  serverbase="$(base64 -w 0 ${subscribepath}/xclient/${serveruser})"
+  serverbase="$(base64 -w 0 ${subscribepath}/xclient/xray)"
   echo "$serverbase" > ${subscribepath}/xclient/${serveruser}
 }
 
 Subscribe(){
+  xdomain="$(ls -l /etc/letsencrypt/live | awk '/^d/ {print $NF}')"
+  xdest="$(grep "serverNames" ${serverpath}/vless.json | awk -F '"' '{print $4}')"
+  xuuid="$(grep '"id"' ${serverpath}/vless.json | awk -F '"' 'NR==1{print $4}')"
+  xpublic="$(grep '"path"' ${serverpath}/vless.json | awk -F '"' '{print $4}')"
+  xsid="$(grep '"shortIds"' ${serverpath}/vless.json | awk -F '"' '{print $4}')"
+  xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
+  xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
+  mkdir -p -m 644 $subscribepath
+  mkdir -p -m 644 $subscribepath/xclient
+  mkdir -p -m 644 $subscribepath/mclient
+  if [ "$xdest" != "$xdomain" ]; then sed -i "s/${xdest}/${xdomain}/g" ${serverpath}/vless.json; $service $servername restart; purple "配置已修改。"; fi
   cat > ${subscribepath}/xray << XSUB
 vless://${xuuid}@${xdest}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xtls
 vless://${xuuid}@${xdest}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xhttp
@@ -550,10 +558,7 @@ MenuXray(){
     readp "请输入选项：" option
     case "$option" in
       1) Download; return;;
-      2) if [ "$xdest" != "$xdomain" ]; then
-           sed -i "s/${xdest}/${xdomain}/g" ${serverpath}/vless.json
-           $service $servername restart
-           purple "配置已修改。"
+      2) 
          else
            SaltMD5
            cyan "$subscribexurl"; qr --ascii "$subscribexurl"
@@ -583,11 +588,6 @@ while true; do
   xversion="$(xray version | awk 'NR==1 {print $2}')"
   xdomain="$(ls -l /etc/letsencrypt/live | awk '/^d/ {print $NF}')"
   xdest="$(grep "serverNames" ${serverpath}/vless.json | awk -F '"' '{print $4}')"
-  xuuid="$(grep '"id"' ${serverpath}/vless.json | awk -F '"' 'NR==1{print $4}')"
-  xpublic="$(grep '"path"' ${serverpath}/vless.json | awk -F '"' '{print $4}')"
-  xsid="$(grep '"shortIds"' ${serverpath}/vless.json | awk -F '"' '{print $4}')"
-  xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
-  xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   xuser="$(cat ${subscribepath}/subscribe)"
   subscribexurl="https://${xdomain}/sub/xclient/${xuser}"
   subscribemurl="https://${xdomain}/sub/mclient/${xuser}"
