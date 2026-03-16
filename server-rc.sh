@@ -564,6 +564,8 @@ MenuXray(){
            $service $servername restart
            purple "配置已修改。"
          else
+           Subscribe
+           SaltMD5
            cyan "$subscribexurl"; qr --ascii "$subscribexurl"
            cyan "$subscribemurl"; qr --ascii "$subscribemurl"
            break
@@ -581,8 +583,6 @@ Xray
 Service
 Cert
 Nginx
-Subscribe
-SaltMD5
 SSHD
 
 purple "\nMu"
