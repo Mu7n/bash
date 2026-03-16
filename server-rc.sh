@@ -459,6 +459,9 @@ SaltMD5(){
   cat ${subscribepath}/mihomo >> ${subscribepath}/mclient/${serveruser}
   serverbase="$(base64 -w 0 ${subscribepath}/xray)"
   echo "$serverbase" > ${subscribepath}/xclient/${serveruser}
+  subscribexurl="https://${xdomain}/sub/xclient/${serveruser}"
+  subscribemurl="https://${xdomain}/sub/mclient/${serveruser}"
+  cyan "$subscribexurl"; $QRcmd "$subscribexurl"; cyan "$subscribemurl"; $QRcmd "$subscribemurl";
 }
 
 Subscribe(){
@@ -557,7 +560,7 @@ MenuXray(){
     readp "请输入选项：" option
     case "$option" in
       1) Download; return;;
-      2) Subscribe; SaltMD5; cyan "$subscribexurl"; $QRcmd "$subscribexurl"; cyan "$subscribemurl"; $QRcmd "$subscribemurl"; continue;;
+      2) Subscribe; SaltMD5; continue;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
@@ -580,9 +583,6 @@ while true; do
   xversion="$(xray version | awk 'NR==1 {print $2}')"
   xdomain="$(ls -l /etc/letsencrypt/live | awk '/^d/ {print $NF}')"
   xdest="$(grep "serverNames" ${serverpath}/vless.json | awk -F '"' '{print $4}')"
-  xuser="$(ls -l ${subscribepath}/xclient | awk '{print $1}')"
-  subscribexurl="https://${xdomain}/sub/xclient/${xuser}"
-  subscribemurl="https://${xdomain}/sub/mclient/${xuser}"
   blue "1、Xray"
   blue "2、Nginx"
   blue "3、Exit"
