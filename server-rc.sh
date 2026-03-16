@@ -389,7 +389,7 @@ Download(){
     zipsha="$(sha256sum $serverfile | awk '{printf $1}')"
     dgstsha="$(awk -F '= ' '/256=/ {print $2}' $serverfile.dgst)"
     if [ "$dgstsha" != "$zipsha" ]; then sleep 5 && servertag="" && servertag="$(curl -sf $serverapi | grep '"tag_name"' | awk -F '"' '{print $4}')" && serverurl="${serversite}/${servertag}/${serverfile}"; else blue "check！"; Decompress && break; fi
-    if [ -f "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then $service $servername restart; fi
+    if [ -s "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then ${service} ${servername} restart; fi
   done
 }
 
@@ -462,13 +462,13 @@ SaltMD5(){
 }
 
 Subscribe(){
-  cat > ${subscribepath}/xclient/xray << XSUB
+  cat > ${subscribepath}/xclient/xray.json << XSUB
 vless://${xuuid}@${xdest}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xtls
 vless://${xuuid}@${xdest}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xhttp
 vless://${xuuid}@${xdest}:23710?&type=kcp&headerType=utp&seed=${xuuid}#mkcp
 hysteria2://${xuuid}@${xdest}:10723?obfs=salamander&obfs-password=${xuuid}&insecure=30&sni=${xdest}&alpn=h3#hysteria2
 XSUB
-  cat > ${subscribepath}/mclient/mihomo << MSUB
+  cat > ${subscribepath}/mclient/mihomo.json << MSUB
 proxies:
   - name: "reality xtls"
     type: vless
