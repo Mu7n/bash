@@ -329,7 +329,7 @@ XTLSREALITYXHTTP
 
 Service(){
   if [ "$release" == alpine ]; then
-    cat > /etc/init.d/${servername} << XRAY
+    cat > /etc/init.d/${servername} << INITD
 #!/sbin/openrc-run
 
 name="$servername"
@@ -357,10 +357,10 @@ checkconfig() {
 start_pre() {
 	checkconfig || return 1
 }
-XRAY
+INITD
     chmod +x /etc/init.d/${servername}; rc-update add $servername; $service $servername start
   elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then
-    cat > /etc/systemd/system/${servername}.service << XRAY
+    cat > /etc/systemd/system/${servername}.service << SYSTEM
 [Unit]
 Description=$servername Service
 After=network.target nss-lookup.target
@@ -374,7 +374,7 @@ RuntimeDirectory=$servername
 RuntimeDirectoryMode=0755
 [Install]
 WantedBy=multi-user.target
-XRAY
+SYSTEM
     chmod 644 /etc/systemd/system/${servername}.service; systemctl daemon-reload; $service $servername enable; $service $servername start
   fi
 }
