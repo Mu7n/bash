@@ -456,20 +456,20 @@ SaltMD5(){
   rm -rf ${subscribepath}/xclient/*
   rm -rf ${subscribepath}/mclient/*
   serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
-  cat ${subscribepath}/mclient/mihomo.json >> ${subscribepath}/mclient/${serveruser}
-  cat ${subscribepath}/xclient/xray.json >> ${subscribepath}/xclient/${serveruser}
+  cat ${subscribepath}/mihomo.json >> ${subscribepath}/mclient/${serveruser}
+  cat ${subscribepath}/xray.json >> ${subscribepath}/xclient/${serveruser}
   serverbase="$(base64 -w 0 ${subscribepath}/xclient/${serveruser})"
   echo "$serverbase" > ${subscribepath}/xclient/${serveruser}
 }
 
 Subscribe(){
-  cat > ${subscribepath}/xclient/xray.json << XSUB
+  cat > ${subscribepath}/xray.json << XSUB
 vless://${xuuid}@${xdest}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xtls
 vless://${xuuid}@${xdest}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xhttp
 vless://${xuuid}@${xdest}:23710?&type=kcp&headerType=utp&seed=${xuuid}#mkcp
 hysteria2://${xuuid}@${xdest}:10723?obfs=salamander&obfs-password=${xuuid}&insecure=30&sni=${xdest}&alpn=h3#hysteria2
 XSUB
-  cat > ${subscribepath}/mclient/mihomo.json << MSUB
+  cat > ${subscribepath}/mihomo.json << MSUB
 proxies:
   - name: "reality xtls"
     type: vless
