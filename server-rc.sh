@@ -3,11 +3,11 @@
 set -u
 
 if { [[ -f "/etc/issue" ]] && grep -qi "Alpine" /etc/issue; } || { [[ -f "/etc/os-release" ]] && grep -qi "ID=alpine" /etc/os-release; }; then
-  release="alpine"; service="rc-service"; nginxpid="/run/nginx/nginx.pid"; nginxconf="/etc/nginx/http.d/default.conf"; if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
+  release="alpine"; service="rc-service"; nginxpid="/run/nginx/nginx.pid"; nginxconf="/etc/nginx/http.d/default.conf"; QRcmd="qr --ascii --optimize=20"; if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
 elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
-  release="debian"; service="service"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"; if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
+  release="debian"; service="service"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"; QRcmd="qrencode -m 1 -t UTF8i"; if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
 elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
-  release="ubuntu"; service="service"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"; if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
+  release="ubuntu"; service="service"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"; QRcmd="qrencode -m 1 -t UTF8i"; if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
 fi
 if [[ ! -z "$release" ]]; then case "$(uname -m)" in amd64 | x86_64) serverfile="Xray-linux-64.zip";; armv8 | aarch64) serverfile="Xray-linux-arm64-v8a.zip";; i386 | i686) serverfile="Xray-linux-32.zip";; *) red "未知架构！"; exit 0;; esac; else red "未知系统！"; exit 0; fi
 
@@ -557,14 +557,7 @@ MenuXray(){
     readp "请输入选项：" option
     case "$option" in
       1) Download; return;;
-      2) 
-         else
-           SaltMD5
-           cyan "$subscribexurl"; qr --ascii "$subscribexurl"
-           cyan "$subscribemurl"; qr --ascii "$subscribemurl"
-           break
-         fi
-         continue;;
+      2) Subscribe; SaltMD5; cyan "$subscribexurl"; $QRcmd "$subscribexurl"; cyan "$subscribemurl"; $QRcmd "$subscribemurl"; continue;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
