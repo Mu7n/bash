@@ -455,8 +455,8 @@ SaltMD5(){
   rm -rf ${subscribepath}/xclient/*
   rm -rf ${subscribepath}/mclient/*
   serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
-  cat ${subscribepath}/mclient/mihomo >> ${subscribepath}/mclient/${serveruser}
-  cat ${subscribepath}/xclient/xray >> ${subscribepath}/xclient/${serveruser}
+  cat ${subscribepath}/mclient/mihomo.json >> ${subscribepath}/mclient/${serveruser}
+  cat ${subscribepath}/xclient/xray.json >> ${subscribepath}/xclient/${serveruser}
   serverbase="$(base64 -w 0 ${subscribepath}/xclient/${serveruser})"
   echo "$serverbase" > ${subscribepath}/xclient/${serveruser}
 }
