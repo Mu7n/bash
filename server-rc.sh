@@ -327,8 +327,8 @@ XTLSREALITYXHTTP
 }
 
 Service(){
-  if [ -f "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then
-    if [ "$release" == alpine ]; then
+  if [ "$release" == alpine ]; then
+    if [ ! -f "/etc/init.d/${servername}" ]; then
       cat > /etc/init.d/${servername} << INITD
 #!/sbin/openrc-run
 name="$servername"
@@ -358,7 +358,9 @@ start_pre() {
 }
 INITD
       chmod +x /etc/init.d/${servername}; rc-update add $servername; $service $servername start
-    elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then
+    fi
+  elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then
+    if [ ! -f "/etc/systemd/system/${servername}.service" ]; then
       cat > /etc/systemd/system/${servername}.service << SYSTEM
 [Unit]
 Description=$servername Service
