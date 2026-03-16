@@ -390,7 +390,7 @@ Download(){
     zipsha="$(sha256sum $serverfile | awk '{printf $1}')"
     dgstsha="$(awk -F '= ' '/256=/ {print $2}' $serverfile.dgst)"
     if [ "$dgstsha" != "$zipsha" ]; then sleep 5 && servertag="" && servertag="$(curl -sf $serverapi | grep '"tag_name"' | awk -F '"' '{print $4}')" && serverurl="${serversite}/${servertag}/${serverfile}"; else blue "check！"; Decompress && break; fi
-    if [ -f "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then Reservice ${servername}; fi
+    if [ -f "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then REservice ${servername}; fi
   done
 }
 
