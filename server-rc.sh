@@ -60,8 +60,7 @@ http {
     include /etc/nginx;
 }
 CONFIG
-  sed -i "s/nginx.pid/${nginxpid}/g" /etc/nginx/nginx.conf
-  sed -i "s//etc/nginx/${nginxconf}/g" $nginxconf
+  sed -i "s/nginx.pid/${nginxpid}/g; s|/etc/nginx|${nginxconf}|g" /etc/nginx/nginx.conf
   cat > $nginxconf << DEST
 server {
     listen 80;
