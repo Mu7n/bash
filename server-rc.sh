@@ -453,11 +453,11 @@ SaltMD5(){
 }
 
 Subscribe(){
-  xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
-  xdest="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
-  xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1{print $4}')"
-  xpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
-  xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
+  local xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
+  local xdest="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
+  local xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1{print $4}')"
+  local xpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
+  local xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
   #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   #xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   mkdir -p -m 644 $subscribepath
