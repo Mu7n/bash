@@ -525,7 +525,7 @@ MenuNginx(){
     readp "请输入选项：" option
     case "$option" in
       1) Cert; Nginx; return;;
-      2) rm -rf /etc/letsencrypt/{live,renewal,archive}; Domain; Cert; Nginx; xdomain="" && xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')" && sed -i "s/${xdest}/${xdomain}/g" $serverjson; $REservice; purple "配置已修改。"; return;;
+      2) rm -rf /etc/letsencrypt/{live,renewal,archive}; Domain; Cert; Nginx; Subscribe; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
