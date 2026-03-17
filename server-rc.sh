@@ -255,49 +255,6 @@ Xray(){
         "destOverride": ["http", "tls", "quic"],
         "routeOnly": true
       }
-    },
-    {
-      "tag": "hysteria2",
-      "port": 10723,
-      "protocol": "hysteria",
-      "settings": {
-        "version": 2,
-        "clients": [
-          {
-            "auth": "$xuuid"
-          }
-        ]
-      },
-      "streamSettings": {
-        "network": "hysteria",
-        "hysteriaSettings": {
-          "version": 2
-        },
-        "security": "tls",
-        "tlsSettings": {
-          "alpn": ["h3"],
-          "certificates": [
-            {
-              "certificateFile": "/etc/letsencrypt/live/${serverdomain}/fullchain.pem",
-              "keyFile": "/etc/letsencrypt/live/${serverdomain}/privkey.pem"
-            }
-          ]
-        },
-        "finalmask": {
-          "udp": [
-            {
-              "type": "salamander",
-              "settings": {
-                "password": "$xuuid"
-              }
-            }
-          ],
-          "quicParams": {
-            "congestion": "force-brutal",
-            "brutalUp": "100mbps"
-          }
-        }
-      }
     }
   ],
   "outbounds": [
@@ -337,6 +294,7 @@ respawn_delay=5
 respawn_max=2
 respawn_period=600
 pidfile="/run/\${RC_SVCNAME}.pid"
+rc_ulimit="-n 1024000 -u 1024000"
 capabilities="^cap_net_bind_service,^cap_net_admin,^cap_net_raw"
 extra_commands="checkconfig"
 confdir=${confdir:-"${serverpath}/"}
@@ -368,14 +326,14 @@ After=network.target nss-lookup.target
 ExecStart=${serverpath}/${servername} run -confdir $serverpath
 Restart=on-failure
 RestartPreventExitStatus=23
-LimitNPROC=10000
-LimitNOFILE=1000000
+LimitNPROC=10240
+LimitNOFILE=1024000
 RuntimeDirectory=$servername
 RuntimeDirectoryMode=0755
 [Install]
 WantedBy=multi-user.target
 SYSTEM
-      chmod 644 /etc/systemd/system/${servername}.service; systemctl daemon-reload; $service $servername enable; $service $servername start
+      chmod 644 /etc/systemd/system/${servername}.service; systemctl daemon-reload; systemctl enable $servername; $service $servername start
     fi
   fi
 }
@@ -484,8 +442,8 @@ Subscribe(){
   cat > ${subscribepath}/xray << XSUB
 vless://${xuuid}@${xdest}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xtls
 vless://${xuuid}@${xdest}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xhttp
-vless://${xuuid}@${xdest}:23710?&type=kcp&headerType=utp&seed=${xuuid}#mkcp
-hysteria2://${xuuid}@${xdest}:10723?obfs=salamander&obfs-password=${xuuid}&insecure=30&sni=${xdest}&alpn=h3#hysteria2
+vless://${xuuid}@${xdest}:10723?&type=kcp&headerType=utp&seed=${xuuid}#mkcp
+
 XSUB
   cat > ${subscribepath}/mihomo << MSUB
 proxies:
@@ -523,20 +481,7 @@ proxies:
     udp: true
     packet-encoding: xudp
     client-fingerprint: chrome
-  - name: "hysteria2"
-    type: hysteria2
-    server: $xdest
-    port: 23710
-    password: $xuuid
-    skip-cert-verify: false
-    sni: $xdest
-    alpn:
-      - h3
-    up: "100 Mbps"
-    down: "200 Mbps"
-    hop-interval: 30
-    obfs: salamander
-    obfs-password: $xuuid
+
 MSUB
 }
 
@@ -565,22 +510,29 @@ MenuXray(){
     readp "请输入选项：" option
     case "$option" in
       1) Download; return;;
-      2) Subscribe; SaltMD5; continue;;
+      2) Subscribe; SaltMD5; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
   done
 }
 
-Domain
-Download
-Xray
-Subscribe
-Service
-Cert
-Nginx
-SaltMD5
-#SSHD
+if [ ! -f "/etc/letsencrypt/live" ]; then
+  if [ ! -f "${serverpath}/vless.json" ]; then
+    if [ ! -f "${serverpath}/${servername}" ]; then
+      Domain; Download; Xray; Subscribe; Service; Cert; Nginx; SaltMD5; #SSHD
+    fi
+  fi
+else
+  serverdomain="$(ls -l /etc/letsencrypt/live | awk '/^d/ {print $NF}')"
+  if [ ! -f "${serverpath}/vless.json" ]; then
+    if [ ! -f "${serverpath}/${servername}" ]; then
+      Download; Xray; Subscribe; Service; SaltMD5
+    else
+      Xray; Subscribe; SaltMD5
+    fi
+  fi
+fi
 
 purple "\nMu"
 
@@ -599,3 +551,5 @@ while true; do
     *) red "请重新输入！"; continue;;
   esac
 done
+
+purple "\nEnd!"
