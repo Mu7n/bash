@@ -1,3 +1,4 @@
+#json
 ,
     {
       "tag": "hysteria2",
@@ -42,3 +43,20 @@
         }
       }
     }
+#x
+hysteria2://${xuuid}@${xdest}:10723?obfs=salamander&obfs-password=${xuuid}&insecure=30&sni=${xdest}&alpn=h3#hysteria2
+#m
+  - name: "hysteria2"
+    type: hysteria2
+    server: $xdest
+    port: 23710
+    password: $xuuid
+    skip-cert-verify: false
+    sni: $xdest
+    alpn:
+      - h3
+    up: "100 Mbps"
+    down: "200 Mbps"
+    hop-interval: 30
+    obfs: salamander
+    obfs-password: $xuuid
