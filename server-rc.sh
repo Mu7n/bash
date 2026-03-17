@@ -25,7 +25,8 @@ if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-r
   MKservice="/etc/init.d/${servername}"
   ENservice="rc-update add $servername"
   REservice="rc-service $servername restart"
-  if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
+  CVservice=""nginx" "certbot" "unzip" "tar" "qr" "ufw""
+  INservice="apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw"
   nginxpid="/run/nginx/nginx.pid"
   nginxconf="/etc/nginx/http.d/default.conf"
   qrcmd="qr --ascii --optimize=20"
@@ -34,7 +35,8 @@ elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os
   MKservice="/etc/systemd/system/${servername}.service"
   ENservice="systemctl daemon-reload && systemctl enable $servername"
   REservice="service $servername restart"
-  if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
+  CVservice=""nginx" "certbot" "unzip" "tar" "qrencode" "ufw""
+  INservice="apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw"
   nginxpid="/run/nginx.pid"
   nginxconf="/etc/nginx/sites-enabled/default"
   qrcmd="qrencode -m 1 -t UTF8i"
@@ -43,7 +45,8 @@ elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os
   MKservice="/etc/systemd/system/${servername}.service"
   ENservice="systemctl daemon-reload && systemctl enable $servername"
   REservice="service $servername restart"
-  if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
+  CVservice=""nginx" "certbot" "unzip" "tar" "qrencode" "ufw""
+  INservice="apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw"
   nginxpid="/run/nginx.pid"
   nginxconf="/etc/nginx/sites-enabled/default"
   qrcmd="qrencode -m 1 -t UTF8i"
@@ -542,17 +545,13 @@ MenuXray(){
   done
 }
 
-if [ ! -f "$sslpath" ]; then
-  Domain; Cert; Nginx;
-else
-  serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
-fi
-
+if ! type $CVservice >/dev/null 2>&1; then blue "开始安装。"; $INservice; fi
+  
 if [ ! -f "$serverjson" ]; then
-  if [ ! -f "$serverproc" ]; then
-    Download; Xray; Subscribe; Service; SaltMD5; #SSHD
+  if [  -f "$serverproc" ]; then
+    Domain; Xray; Nginx; Subscribe; SaltMD5
   else
-    Xray; Subscribe; SaltMD5
+    Domain; Download; Xray; Cert; Nginx; Service; Subscribe; SaltMD5; #SSHD
   fi
 fi
 
