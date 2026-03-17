@@ -22,8 +22,8 @@
           "alpn": ["h3"],
           "certificates": [
             {
-              "certificateFile": "/etc/letsencrypt/live/${serverdomain}/fullchain.pem",
-              "keyFile": "/etc/letsencrypt/live/${serverdomain}/privkey.pem"
+              "certificateFile": "${sslpath}/${serverdomain}/fullchain.pem",
+              "keyFile": "${sslpath}/${serverdomain}/privkey.pem"
             }
           ]
         },
