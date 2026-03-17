@@ -2,6 +2,12 @@
 
 set -u
 
+red(){  echo -e "\e[31m$1\e[0m";}
+blue(){  echo -e "\e[34m$1\e[0m";}
+purple(){  echo -e "\e[35m$1\e[0m";}
+cyan(){  echo -e "\e[36m$1\e[0m";}
+readp(){  read -p "$(cyan "$1")" $2;}
+
 if { [[ -f "/etc/issue" ]] && grep -qi "Alpine" /etc/issue; } || { [[ -f "/etc/os-release" ]] && grep -qi "ID=alpine" /etc/os-release; }; then
   release="alpine"; service="rc-service"; nginxpid="/run/nginx/nginx.pid"; nginxconf="/etc/nginx/http.d/default.conf"; QRcmd="qr --ascii --optimize=20"; if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
 elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
@@ -10,12 +16,6 @@ elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os
   release="ubuntu"; service="service"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"; QRcmd="qrencode -m 1 -t UTF8i"; if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
 fi
 if [[ ! -z "$release" ]]; then case "$(uname -m)" in amd64 | x86_64) serverfile="Xray-linux-64.zip";; armv8 | aarch64) serverfile="Xray-linux-arm64-v8a.zip";; i386 | i686) serverfile="Xray-linux-32.zip";; *) red "未知架构！"; exit 0;; esac; else red "未知系统！"; exit 0; fi
-
-red(){  echo -e "\e[31m$1\e[0m";}
-blue(){  echo -e "\e[34m$1\e[0m";}
-purple(){  echo -e "\e[35m$1\e[0m";}
-cyan(){  echo -e "\e[36m$1\e[0m";}
-readp(){  read -p "$(cyan "$1")" $2;}
 
 servername="xray"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
