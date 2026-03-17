@@ -385,28 +385,33 @@ Download(){
     while true; do
       blue "$serverurl，正在下载。"
       curl -O -L -H 'Cache-Control: no-cache' $serverurl -#
-      if unzip -t $serverfile; then break; else sleep 15 && servertag="" && servertag="$(curl -sf $serverapi | grep '"tag_name"' | awk -F '"' '{print $4}')" && serverurl="${serversite}/${servertag}/${serverfile}"; fi
+      if unzip -t $serverfile; then
+        break
+      else
+        sleep 15 && servertag="" && servertag="$(curl -sf $serverapi | grep '"tag_name"' | awk -F '"' '{print $4}')" && serverurl="${serversite}/${servertag}/${serverfile}"
+      fi
     done
     blue "$serverurl.dgst，正在下载。"
     curl -O -L -H 'Cache-Control: no-cache' $serverurl.dgst -#
     zipsha="$(sha256sum $serverfile | awk '{printf $1}')"
     dgstsha="$(awk -F '= ' '/256=/ {print $2}' $serverfile.dgst)"
-    if [ "$dgstsha" != "$zipsha" ]; then sleep 5 && servertag="" && servertag="$(curl -sf $serverapi | grep '"tag_name"' | awk -F '"' '{print $4}')" && serverurl="${serversite}/${servertag}/${serverfile}"; else blue "check！"; Decompress && break; fi
-    if [ -f "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then $service $servername restart; fi
+    if [ "$dgstsha" == "$zipsha" ]; then blue "check！" && Decompress && break; fi
   done
+  if [ -f "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then $service $servername restart; fi
 }
 
 Decompress(){
   mkdir -p -m 644 $serverpath
   unzip -oj $serverfile -d $serverpath
-  rm -rf ${serverfile}
   ln -sf ${serverpath}/${servername} /usr/local/bin
+  rm -rf $serverfile
+  rm -rf $serverfile.dgst
 }
 
 Domain(){
   readp "请输入域名：" serverdomain
   purple "域名：$serverdomain"
-  while true; do readp "请确认域名[Yes/No]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac done
+  while true; do readp "请确认域名[Yes/No]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac; done
 }
 
 Cert(){
