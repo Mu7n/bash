@@ -1,0 +1,44 @@
+,
+    {
+      "tag": "hysteria2",
+      "port": 10723,
+      "protocol": "hysteria",
+      "settings": {
+        "version": 2,
+        "clients": [
+          {
+            "auth": "$xuuid"
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "hysteria",
+        "hysteriaSettings": {
+          "version": 2
+        },
+        "security": "tls",
+        "tlsSettings": {
+          "alpn": ["h3"],
+          "certificates": [
+            {
+              "certificateFile": "/etc/letsencrypt/live/${serverdomain}/fullchain.pem",
+              "keyFile": "/etc/letsencrypt/live/${serverdomain}/privkey.pem"
+            }
+          ]
+        },
+        "finalmask": {
+          "udp": [
+            {
+              "type": "salamander",
+              "settings": {
+                "password": "$xuuid"
+              }
+            }
+          ],
+          "quicParams": {
+            "congestion": "force-brutal",
+            "brutalUp": "100mbps"
+          }
+        }
+      }
+    }
