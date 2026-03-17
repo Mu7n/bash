@@ -8,25 +8,47 @@ purple(){  echo -e "\e[35m$1\e[0m";}
 cyan(){  echo -e "\e[36m$1\e[0m";}
 readp(){  read -p "$(cyan "$1")" $2;}
 
-if { [[ -f "/etc/issue" ]] && grep -qi "Alpine" /etc/issue; } || { [[ -f "/etc/os-release" ]] && grep -qi "ID=alpine" /etc/os-release; }; then
-  release="alpine"; service="rc-service"; nginxpid="/run/nginx/nginx.pid"; nginxconf="/etc/nginx/http.d/default.conf"; QRcmd="qr --ascii --optimize=20"; if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
-elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
-  release="debian"; service="service"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"; QRcmd="qrencode -m 1 -t UTF8i"; if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
-elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
-  release="ubuntu"; service="service"; nginxpid="/run/nginx.pid"; nginxconf="/etc/nginx/sites-enabled/default"; QRcmd="qrencode -m 1 -t UTF8i"; if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
-fi
-if [[ ! -z "$release" ]]; then case "$(uname -m)" in amd64 | x86_64) serverfile="Xray-linux-64.zip";; armv8 | aarch64) serverfile="Xray-linux-arm64-v8a.zip";; i386 | i686) serverfile="Xray-linux-32.zip";; *) red "未知架构！"; exit 0;; esac; else red "未知系统！"; exit 0; fi
-
+case "$(uname -m)" in amd64 | x86_64) serverfile="Xray-linux-64.zip";; armv8 | aarch64) serverfile="Xray-linux-arm64-v8a.zip";; i386 | i686) serverfile="Xray-linux-32.zip";; *) red "未知架构！"; exit 0;; esac
 servername="xray"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
 serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
+serverpath="/etc/aio/${servername}"
+serverproc="${serverpath}/${servername}"
+serverjson="${serverpath}/${servername}.json"
 servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
 serverurl="${serversite}/${servertag}/${serverfile}"
-serverpath="/etc/aio/${servername}"
-serverjson="/etc/aio/${servername}/${servername}.json"
-subscribepath="/etc/aio/subscribe"
 sslpath="/etc/letsencrypt/live"
-#serverid="$(ps -ef | grep $name_sh | grep -v grep | awk '{print $8}')"
+subscribepath="/etc/aio/subscribe"
+
+if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release; }; then
+  release="alpine"
+  MKservice="/etc/init.d/${servername}"
+  ENservice="rc-update add $servername"
+  REservice="rc-service $servername restart"
+  if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
+  nginxpid="/run/nginx/nginx.pid"
+  nginxconf="/etc/nginx/http.d/default.conf"
+  qrcmd="qr --ascii --optimize=20"
+elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
+  release="debian"
+  MKservice="/etc/systemd/system/${servername}.service"
+  ENservice="systemctl daemon-reload && systemctl enable $servername"
+  REservice="service $servername restart"
+  if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
+  nginxpid="/run/nginx.pid"
+  nginxconf="/etc/nginx/sites-enabled/default"
+  qrcmd="qrencode -m 1 -t UTF8i"
+elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
+  release="ubuntu"
+  MKservice="/etc/systemd/system/${servername}.service"
+  ENservice="systemctl daemon-reload && systemctl enable $servername"
+  REservice="service $servername restart"
+  if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
+  nginxpid="/run/nginx.pid"
+  nginxconf="/etc/nginx/sites-enabled/default"
+  qrcmd="qrencode -m 1 -t UTF8i"
+fi
+if [ -z "$release" ]; then red "未知系统！"; exit 0; fi
 
 Nginx(){
   cat > /etc/nginx/nginx.conf << 'CONFIG'
@@ -102,9 +124,9 @@ server {
     server_name $serverdomain;
     ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem;
     ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem;
-    location ~ ^/sub/(mclient|xclient)/(.*) {
+    location ~ ^/s/(xclient|mclient)/(.*) {
         default_type 'text/plain; charset=utf-8';
-        alias ${subscribepath}/subscribe/\$1/\$2;
+        alias ${subscribepath}/\$1/\$2;
     }
     location /${xpublic} { #与 reality-xhttp 中 path 对应
         grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
@@ -130,7 +152,7 @@ Xray(){
   x25519="$(xray x25519)"
   xprivate="$(echo "$x25519" | grep "PrivateKey" | awk '{print $2}')"
   xpublic="$(echo "$x25519" | grep "Password" | awk '{print $2}')"
-  cat > ${serverpath}/${serverjson} << XTLSREALITYXHTTP
+  cat > $serverjson << XTLSREALITYXHTTP
 {
   "log": {
     "loglevel": "warning",
@@ -286,8 +308,8 @@ XTLSREALITYXHTTP
 
 Service(){
   if [ "$release" == alpine ]; then
-    if [ ! -f "/etc/init.d/${servername}" ]; then
-      cat > /etc/init.d/${servername} << INITD
+    if [ ! -f "$MKservice" ]; then
+      cat > $MKservice << INITD
 #!/sbin/openrc-run
 name="$servername"
 description="$servername Service"
@@ -299,8 +321,8 @@ pidfile="/run/\${RC_SVCNAME}.pid"
 rc_ulimit="-n 1024000 -u 1024000"
 capabilities="^cap_net_bind_service,^cap_net_admin,^cap_net_raw"
 extra_commands="checkconfig"
-confdir=${confdir:-"${serverpath}/"}
-command="${serverpath}/${servername}"
+confdir=${confdir:-"$serverpath"}
+command="$serverproc"
 command_args="run -confdir \$confdir"
 required_files="\$confdir"
 depend() {
@@ -316,16 +338,16 @@ start_pre() {
 	checkconfig || return 1
 }
 INITD
-      chmod +x /etc/init.d/${servername}; rc-update add $servername; $service $servername start
+      chmod +x $MKservice; $ENservice; $REservice
     fi
   elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then
-    if [ ! -f "/etc/systemd/system/${servername}.service" ]; then
-      cat > /etc/systemd/system/${servername}.service << SYSTEM
+    if [ ! -f "$MKservice" ]; then
+      cat > $MKservice << SYSTEM
 [Unit]
 Description=$servername Service
 After=network.target nss-lookup.target
 [Service]
-ExecStart=${serverpath}/${servername} run -confdir $serverpath
+ExecStart=$serverproc run -confdir $serverpath
 Restart=on-failure
 RestartPreventExitStatus=23
 LimitNPROC=10240
@@ -335,7 +357,7 @@ RuntimeDirectoryMode=0755
 [Install]
 WantedBy=multi-user.target
 SYSTEM
-      chmod 644 /etc/systemd/system/${servername}.service; systemctl daemon-reload; systemctl enable $servername; $service $servername start
+      chmod 644 $MKservice; $ENservice; $REservice
     fi
   fi
 }
@@ -357,7 +379,7 @@ Download(){
     dgstsha="$(awk -F '= ' '/256=/ {print $2}' $serverfile.dgst)"
     if [ "$dgstsha" == "$zipsha" ]; then blue "check！" && Decompress && break; fi
   done
-  if [ -f "/etc/init.d/${servername}" ] || [ -f "/etc/systemd/system/${servername}.service" ]; then $service $servername restart; fi
+  if [ -f "$MKservice" ]; then $REservice; fi
 }
 
 Decompress(){
@@ -388,10 +410,11 @@ Cert(){
 
 SSHD(){
   if [ ! -f /etc/ssh/sshd_config.d/sshd.conf ]; then
+    local servername=ssh
     readp "请输入SSH端口：" serversshd
     purple "SSH端口：$serversshd"
     echo -e "PermitRootLogin yes\nPubkeyAuthentication yes\nPasswordAuthentication no\nPort $serversshd" > /etc/ssh/sshd_config.d/sshd.conf
-    $service ssh restart
+    $REservice
     if [ -f /usr/lib/systemd/system/ssh.socket ]; then sed -i "s/22/$serversshd/g" /usr/lib/systemd/system/ssh.socket && systemctl restart ssh.socket; fi
     ufw allow $serversshd; ufw allow 80/tcp; ufw allow 80/udp; ufw allow 443/tcp; ufw allow 443/udp; ufw allow 10723/tcp; ufw allow 10723/udp; ufw allow 23710/tcp; ufw allow 23710/udp; echo "y" | ufw enable >/dev/null
   fi
@@ -411,7 +434,7 @@ SaltMD5(){
   if [[ -f "${subscribepath}/subscribe" && -n "$(cat ${subscribepath}/subscribe)" ]]; then
     serversalt="$(cat ${subscribepath}/subscribe)"
   else
-    readp "请输入salt值，[enter]使用默认值" serversalt
+    readp "请输入salt值，[enter]使用默认值：" serversalt
     echo "$serversalt" > ${subscribepath}/subscribe
   fi
   if [[ -z "$serversalt" ]]; then
@@ -424,23 +447,23 @@ SaltMD5(){
   cat ${subscribepath}/mihomo >> ${subscribepath}/mclient/${serveruser}
   serverbase="$(base64 -w 0 ${subscribepath}/xray)"
   echo "$serverbase" > ${subscribepath}/xclient/${serveruser}
-  subscribexurl="https://${xdomain}/sub/xclient/${serveruser}"
-  subscribemurl="https://${xdomain}/sub/mclient/${serveruser}"
-  cyan "$subscribexurl"; $QRcmd "$subscribexurl"; cyan "$subscribemurl"; $QRcmd "$subscribemurl";
+  subxlink="https://${xdomain}/s/xclient/${serveruser}"
+  submlink="https://${xdomain}/s/mclient/${serveruser}"
+  blue "Xray"; purple "$subxlink"; $qrcmd "$subxlink"; blue "Mihomo"; purple "$submlink"; $qrcmd "$submlink"; cyan "\n"
 }
 
 Subscribe(){
   xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
-  xdest="$(grep "serverNames" ${serverpath}/${serverjson} | awk -F '"' '{print $4}')"
-  xuuid="$(grep '"id"' ${serverpath}/${serverjson} | awk -F '"' 'NR==1{print $4}')"
-  xpublic="$(grep '"path"' ${serverpath}/${serverjson} | awk -F '"' '{print $4}')"
-  xsid="$(grep '"shortIds"' ${serverpath}/${serverjson} | awk -F '"' '{print $4}')"
+  xdest="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
+  xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1{print $4}')"
+  xpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
+  xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
   xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   mkdir -p -m 644 $subscribepath
   mkdir -p -m 644 $subscribepath/xclient
   mkdir -p -m 644 $subscribepath/mclient
-  if [ "$xdest" != "$xdomain" ]; then sed -i "s/${xdest}/${xdomain}/g" ${serverpath}/vless.json; $service $servername restart; purple "配置已修改。"; fi
+  if [ "$xdest" != "$xdomain" ]; then sed -i "s/${xdest}/${xdomain}/g" $serverjson; $REservice; purple "配置已修改。"; fi
   cat > ${subscribepath}/xray << XSUB
 vless://${xuuid}@${xdest}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xtls
 vless://${xuuid}@${xdest}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xhttp
@@ -525,8 +548,8 @@ else
   serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
 fi
 
-if [ ! -f "${serverpath}/${serverjson}" ]; then
-  if [ ! -f "${serverpath}/${servername}" ]; then
+if [ ! -f "$serverjson" ]; then
+  if [ ! -f "$serverproc" ]; then
     Download; Xray; Subscribe; Service; SaltMD5; #SSHD
   else
     Xray; Subscribe; SaltMD5
@@ -538,7 +561,7 @@ purple "\nMu"
 while true; do
   xversion="$(xray version | awk 'NR==1 {print $2}')"
   xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
-  xdest="$(grep "serverNames" ${serverpath}/${serverjson} | awk -F '"' '{print $4}')"
+  xdest="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
   blue "1、Xray"
   blue "2、Nginx"
   blue "3、Exit"
