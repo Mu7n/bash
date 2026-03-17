@@ -23,7 +23,9 @@ serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
 servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
 serverurl="${serversite}/${servertag}/${serverfile}"
 serverpath="/etc/aio/${servername}"
+serverjson="/etc/aio/${servername}/${servername}.json"
 subscribepath="/etc/aio/subscribe"
+sslpath="/etc/letsencrypt/live"
 #serverid="$(ps -ef | grep $name_sh | grep -v grep | awk '{print $8}')"
 
 Nginx(){
@@ -78,8 +80,8 @@ server {
     set_real_ip_from unix:;
     real_ip_header proxy_protocol;
     server_name cdn$serverdomain; #修改为 CDN 域名
-    ssl_certificate /etc/letsencrypt/live/${serverdomain}/fullchain.pem; #修改为 CDN 域名证书
-    ssl_certificate_key /etc/letsencrypt/live/${serverdomain}/privkey.pem; #修改为 CDN 域名证书
+    ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem; #修改为 CDN 域名证书
+    ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem; #修改为 CDN 域名证书
     location /${xpublic} { #与 reality-xhttp 中 path 对应
         grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
         grpc_set_header Host \$host;
@@ -98,8 +100,8 @@ server {
     set_real_ip_from unix:;
     real_ip_header proxy_protocol;
     server_name $serverdomain;
-    ssl_certificate /etc/letsencrypt/live/${serverdomain}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${serverdomain}/privkey.pem;
+    ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem;
+    ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem;
     location ~ ^/sub/(mclient|xclient)/(.*) {
         default_type 'text/plain; charset=utf-8';
         alias ${subscribepath}/subscribe/\$1/\$2;
@@ -128,7 +130,7 @@ Xray(){
   x25519="$(xray x25519)"
   xprivate="$(echo "$x25519" | grep "PrivateKey" | awk '{print $2}')"
   xpublic="$(echo "$x25519" | grep "Password" | awk '{print $2}')"
-  cat > ${serverpath}/vless.json << XTLSREALITYXHTTP
+  cat > ${serverpath}/${serverjson} << XTLSREALITYXHTTP
 {
   "log": {
     "loglevel": "warning",
@@ -428,11 +430,11 @@ SaltMD5(){
 }
 
 Subscribe(){
-  xdomain="$(ls -l /etc/letsencrypt/live | awk '/^d/ {print $NF}')"
-  xdest="$(grep "serverNames" ${serverpath}/vless.json | awk -F '"' '{print $4}')"
-  xuuid="$(grep '"id"' ${serverpath}/vless.json | awk -F '"' 'NR==1{print $4}')"
-  xpublic="$(grep '"path"' ${serverpath}/vless.json | awk -F '"' '{print $4}')"
-  xsid="$(grep '"shortIds"' ${serverpath}/vless.json | awk -F '"' '{print $4}')"
+  xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
+  xdest="$(grep "serverNames" ${serverpath}/${serverjson} | awk -F '"' '{print $4}')"
+  xuuid="$(grep '"id"' ${serverpath}/${serverjson} | awk -F '"' 'NR==1{print $4}')"
+  xpublic="$(grep '"path"' ${serverpath}/${serverjson} | awk -F '"' '{print $4}')"
+  xsid="$(grep '"shortIds"' ${serverpath}/${serverjson} | awk -F '"' '{print $4}')"
   xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   mkdir -p -m 644 $subscribepath
@@ -517,20 +519,17 @@ MenuXray(){
   done
 }
 
-if [ ! -f "/etc/letsencrypt/live" ]; then
-  if [ ! -f "${serverpath}/vless.json" ]; then
-    if [ ! -f "${serverpath}/${servername}" ]; then
-      Domain; Download; Xray; Subscribe; Service; Cert; Nginx; SaltMD5; #SSHD
-    fi
-  fi
+if [ ! -f "$sslpath" ]; then
+  Domain; Cert; Nginx;
 else
-  serverdomain="$(ls -l /etc/letsencrypt/live | awk '/^d/ {print $NF}')"
-  if [ ! -f "${serverpath}/vless.json" ]; then
-    if [ ! -f "${serverpath}/${servername}" ]; then
-      Download; Xray; Subscribe; Service; SaltMD5
-    else
-      Xray; Subscribe; SaltMD5
-    fi
+  serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
+fi
+
+if [ ! -f "${serverpath}/${serverjson}" ]; then
+  if [ ! -f "${serverpath}/${servername}" ]; then
+    Download; Xray; Subscribe; Service; SaltMD5; #SSHD
+  else
+    Xray; Subscribe; SaltMD5
   fi
 fi
 
@@ -538,8 +537,8 @@ purple "\nMu"
 
 while true; do
   xversion="$(xray version | awk 'NR==1 {print $2}')"
-  xdomain="$(ls -l /etc/letsencrypt/live | awk '/^d/ {print $NF}')"
-  xdest="$(grep "serverNames" ${serverpath}/vless.json | awk -F '"' '{print $4}')"
+  xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
+  xdest="$(grep "serverNames" ${serverpath}/${serverjson} | awk -F '"' '{print $4}')"
   blue "1、Xray"
   blue "2、Nginx"
   blue "3、Exit"
