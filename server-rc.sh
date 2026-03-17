@@ -323,7 +323,7 @@ respawn_delay=5
 respawn_max=2
 respawn_period=600
 pidfile="/run/\${RC_SVCNAME}.pid"
-rc_ulimit="-n 1024000 -u 1024000"
+rc_ulimit="-u 10240 -n 102400"
 capabilities="^cap_net_bind_service,^cap_net_admin,^cap_net_raw"
 extra_commands="checkconfig"
 confdir=${confdir:-"$serverpath"}
@@ -356,7 +356,7 @@ ExecStart=$serverproc run -confdir $serverpath
 Restart=on-failure
 RestartPreventExitStatus=23
 LimitNPROC=10240
-LimitNOFILE=1024000
+LimitNOFILE=102400
 RuntimeDirectory=$servername
 RuntimeDirectoryMode=0755
 [Install]
