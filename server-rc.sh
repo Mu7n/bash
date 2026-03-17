@@ -525,7 +525,7 @@ MenuNginx(){
     readp "请输入选项：" option
     case "$option" in
       1) Cert; Nginx; return;;
-      2) rm -rf /etc/letsencrypt/{live,renewal,archive}; Domain; Cert; Nginx; Subscribe; return;;
+      2) rm -rf /etc/letsencrypt/{live,renewal,archive}; Domain; Cert; Subscribe; Nginx; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
@@ -552,9 +552,9 @@ if ! type $CVservice >/dev/null 2>&1; then blue "开始安装。"; $INservice; f
   
 if [ ! -f "$serverjson" ]; then
   if [  -f "$serverproc" ]; then
-    Domain; Xray; Nginx; Subscribe; SaltMD5
+    Domain; Xray; Subscribe; Nginx; SaltMD5
   else
-    Domain; Download; Xray; Cert; Nginx; Service; Subscribe; SaltMD5; #SSHD
+    Domain; Download; Xray; Cert; Subscribe; Nginx; Service; SaltMD5; #SSHD
   fi
 fi
 
