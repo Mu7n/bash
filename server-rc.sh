@@ -32,7 +32,7 @@ if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-r
 elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
   release="debian"
   MKservice="/etc/systemd/system/${servername}.service"
-  ENservice="systemctl daemon-reload && systemctl enable $servername"
+  ENservice="systemctl enable $servername"
   CVservice=""nginx" "certbot" "unzip" "tar" "qrencode" "ufw""
   INservice="apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw"
   nginxpid="/run/nginx.pid"
@@ -41,7 +41,7 @@ elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os
 elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
   release="ubuntu"
   MKservice="/etc/systemd/system/${servername}.service"
-  ENservice="systemctl daemon-reload && systemctl enable $servername"
+  ENservice="systemctl enable $servername"
   CVservice=""nginx" "certbot" "unzip" "tar" "qrencode" "ufw""
   INservice="apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw"
   nginxpid="/run/nginx.pid"
@@ -378,17 +378,17 @@ Download(){
     curl -O -L -H 'Cache-Control: no-cache' $serverurl.dgst -#
     zipsha="$(sha256sum $serverfile | awk '{printf $1}')"
     dgstsha="$(awk -F '= ' '/256=/ {print $2}' $serverfile.dgst)"
-    if [ "$dgstsha" == "$zipsha" ]; then blue "check！" && Decompress && break; fi
+    if [ "$dgstsha" == "$zipsha" ]; then
+      blue "check！"
+      mkdir -p -m 644 $serverpath
+      unzip -oj $serverfile -d $serverpath
+      ln -sf ${serverpath}/${servername} /usr/local/bin
+      rm -rf $serverfile
+      rm -rf $serverfile.dgst
+      break
+    fi
   done
   if [ -f "$MKservice" ]; then service $servername restart; fi
-}
-
-Decompress(){
-  mkdir -p -m 644 $serverpath
-  unzip -oj $serverfile -d $serverpath
-  ln -sf ${serverpath}/${servername} /usr/local/bin
-  rm -rf $serverfile
-  rm -rf $serverfile.dgst
 }
 
 Domain(){
