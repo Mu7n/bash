@@ -452,14 +452,14 @@ SALTMD5(){
   cat ${subscribepath}/mihomo >> ${subscribepath}/mclient/${serveruser}
   serverbase="$(base64 -w 0 ${subscribepath}/xray)"
   echo "$serverbase" > ${subscribepath}/xclient/${serveruser}
-  subxlink="https://${xdomain}/s/xclient/${serveruser}"
-  submlink="https://${xdomain}/s/mclient/${serveruser}"
+  subxlink="https://${serverdomain}/s/xclient/${serveruser}"
+  submlink="https://${serverdomain}/s/mclient/${serveruser}"
   blue "\nXray\n"; purple "$subxlink"; $qrcmd "$subxlink"; blue "Mihomo\n"; purple "$submlink"; $qrcmd "$submlink"
 }
 
 SUBSCRIBE(){
-  xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
-  xdest="$(grep '"serverNames"' $serverjson | awk -F '"' '{print $4}')"
+  serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
+  xdomain="$(grep '"serverNames"' $serverjson | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1{print $4}')"
   xpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
   xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
@@ -469,23 +469,23 @@ SUBSCRIBE(){
   mkdir -p -m 644 $subscribepath/xclient
   mkdir -p -m 644 $subscribepath/mclient
   cat > ${subscribepath}/xray << XSUB
-vless://${xuuid}@${xdest}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xtls
-vless://${xuuid}@${xdest}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xhttp
-vless://${xuuid}@${xdest}:10723?&type=kcp&headerType=utp&seed=${xuuid}#mkcp
+vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#reality xtls
+vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#reality xhttp
+vless://${xuuid}@${xdomain}:10723?&type=kcp&headerType=utp&seed=${xuuid}#mkcp
 
 XSUB
   cat > ${subscribepath}/mihomo << MSUB
 proxies:
   - name: "reality xtls"
     type: vless
-    server: $xdest
+    server: $xdomain
     port: 443
     uuid: $xuuid
     flow: xtls-rprx-vision
     network: tcp
     tls: true
     skip-cert-verify: false
-    servername: $xdest
+    servername: $xdomain
     reality-opts:
       public-key: $xpublic
       short-id: $xsid
@@ -494,13 +494,13 @@ proxies:
     client-fingerprint: chrome
   - name: "reality xhttp"
     type: vless
-    server: $xdest
+    server: $xdomain
     port: 443
     uuid: $xuuid
     network: xhttp
     tls: true
     skip-cert-verify: false
-    servername: $xdest
+    servername: $xdomain
     reality-opts:
       public-key: $xpublic
       short-id: $xsid
@@ -516,7 +516,7 @@ MSUB
 
 Nginx(){
   while true; do
-    purple "检测到$xdomain证书。"
+    purple "检测到$serverdomain证书。"
     blue "1、续签证书"
     blue "2、更改域名"
     blue "3、退出"
@@ -532,14 +532,14 @@ Nginx(){
 
 Xray(){
   while true; do
-    purple "检测到$xversion版本。"
+    purple "检测到$serverversion版本。"
     blue "1、升级内核"
     blue "2、订阅链接"
     blue "3、退出"
     readp "请输入选项：" option
     case "$option" in
       1) DOWNLOAD; return;;
-      2) if [ -z "$xdest"]; then JSON; WEB; elif [ "$xdest" != "$xdomain" ]; then sed -i "s/${xdest}/${xdomain}/g" $serverjson; service $servername restart; purple "配置已修改。"; fi; SUBSCRIBE; SALTMD5; return;;
+      2) if [ -z "$xdomain"]; then JSON; WEB; elif [ "$serverdomain" != "$xdomain" ]; then sed -i "s/${xdomain}/${serverdomain}/g" $serverjson; service $servername restart; purple "配置已修改。"; fi; SUBSCRIBE; SALTMD5; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
@@ -559,9 +559,9 @@ fi
 purple "\nMu\n"
 
 while true; do
-  xversion="$(xray version | awk 'NR==1 {print $2}')"
-  xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
-  xdest="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
+  serverversion="$(xray version | awk 'NR==1 {print $2}')"
+  serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
+  xdomain="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
   blue "1、Xray"
   blue "2、Nginx"
   blue "3、Exit"
