@@ -459,7 +459,7 @@ SALTMD5(){
 
 SUBSCRIBE(){
   xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
-  xdest="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
+  xdest="$(grep '"serverNames"' $serverjson | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1{print $4}')"
   xpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
   xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
@@ -468,6 +468,7 @@ SUBSCRIBE(){
   mkdir -p -m 644 $subscribepath
   mkdir -p -m 644 $subscribepath/xclient
   mkdir -p -m 644 $subscribepath/mclient
+  echo "$xdomain; $xdest"
   if [ "$xdest" != "$xdomain" ]; then sed -i "s/${xdest}/${xdomain}/g" $serverjson; service $servername restart; purple "配置已修改。"; fi
   cat > ${subscribepath}/xray << XSUB
 vless://${xuuid}@${xdest}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xtls
