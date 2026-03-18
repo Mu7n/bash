@@ -553,7 +553,7 @@ if [ ! -f "$serverjson" ]; then
   if [  -f "$serverproc" ]; then
     Domain; Xray; Subscribe; Nginx; SaltMD5
   else
-    Domain; Download; Xray; Cert; Subscribe; Nginx; Service; SaltMD5; #SSHD
+    Domain; HTTP; Download; Xray; Cert; Subscribe; Nginx; Service; SaltMD5; #SSHD
   fi
 fi
 
