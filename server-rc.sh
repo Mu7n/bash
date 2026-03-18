@@ -101,14 +101,14 @@ server {
 }
 server { #限定域名连接，禁止其他方式访问网站
     listen 127.0.0.1:44380 ssl http2 proxy_protocol default_server;
-    set_real_ip_from unix:;
+    set_real_ip_from 127.0.0.1;
     real_ip_header proxy_protocol;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_reject_handshake on;
 }
 server {
     listen 127.0.0.1:44380 ssl http2 proxy_protocol;
-    set_real_ip_from unix:;
+    set_real_ip_from 127.0.0.1;
     real_ip_header proxy_protocol;
     server_name cdn$serverdomain; #修改为 CDN 域名
     ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem; #修改为 CDN 域名证书
@@ -128,7 +128,7 @@ server {
     #listen 443 quic reuseport; #仅版本不小于 v1.25.0 且 SSL 库支持 QUIC 才配置，否则必须删除。
     #listen [::]:443 quic reuseport; #仅版本不小于 v1.25.0 且 SSL 库支持 QUIC 才配置，否则必须删除。
     listen 127.0.0.1:44380 ssl http2 proxy_protocol;
-    set_real_ip_from unix:;
+    set_real_ip_from 127.0.0.1;
     real_ip_header proxy_protocol;
     server_name $serverdomain;
     ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem;
