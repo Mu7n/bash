@@ -405,6 +405,7 @@ Cert(){
     rm -rf /etc/nginx/Mu.tar.gz
   fi
   blue "申请SSL证书。"
+  echo -e "#!/usr/bin/env bash\nservice nginx restart" > /etc/letsencrypt/renewal-hooks/deploy/renewcert.sh && chmod +x /etc/letsencrypt/renewal-hooks/deploy/renewcert.sh
   echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconf
   service nginx restart && certbot --nginx --force-renewal --agree-tos -n -m ssl@cert.bot -d $serverdomain
   echo -e "0 0 1 * * certbot renew --renew-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
