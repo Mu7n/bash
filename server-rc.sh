@@ -468,7 +468,6 @@ SUBSCRIBE(){
   mkdir -p -m 644 $subscribepath
   mkdir -p -m 644 $subscribepath/xclient
   mkdir -p -m 644 $subscribepath/mclient
-  if [ "$xdest" != "$xdomain" ]; then sed -i "s/${xdest}/${xdomain}/g" $serverjson; service $servername restart; purple "配置已修改。"; fi
   cat > ${subscribepath}/xray << XSUB
 vless://${xuuid}@${xdest}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xtls
 vless://${xuuid}@${xdest}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xhttp
@@ -540,7 +539,7 @@ Xray(){
     readp "请输入选项：" option
     case "$option" in
       1) DOWNLOAD; return;;
-      2) SUBSCRIBE; SALTMD5; return;;
+      2) if [ - z "$xdest"]; then JSON; WEB; elif [ "$xdest" != "$xdomain" ]; then sed -i "s/${xdest}/${xdomain}/g" $serverjson; service $servername restart; purple "配置已修改。"; fi; SUBSCRIBE; SALTMD5; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
