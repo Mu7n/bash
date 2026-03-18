@@ -149,6 +149,17 @@ server {
         index index.html index.htm;
     }
 }
+server {
+    listen 58598 ssl http2 so_keepalive=on;
+    listen [::]:58598 ssl http2 so_keepalive=on;
+    server_name $serverdomain;
+    ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem;
+    ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem;
+    location ~ ^/s/(xclient|mclient)/(.*) {
+        default_type 'text/plain; charset=utf-8';
+        alias ${subscribepath}/\$1/\$2;
+    }
+}
 #1、reality+vision 客户端仅使用 www.example.com 域名连接。
 #2、xhttp+tls 客户端可随意使用 www.example.com 或 cdn.example.com 域名连接。
 #3、reality+xhttp 客户端仅使用 www.example.com 域名连接。
