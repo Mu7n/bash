@@ -92,7 +92,7 @@ CONFIG
   fi
 }
 
-Nginx(){
+WEB(){
   cat > $nginxconf << DEST
 server {
     listen 80;
@@ -156,12 +156,12 @@ DEST
   service nginx restart && purple "Nginx配置完成！"
 }
 
-Xray(){
+JSON(){
   xuuid="$(xray uuid)"
   x25519="$(xray x25519)"
   xprivate="$(echo "$x25519" | grep "PrivateKey" | awk '{print $2}')"
   xpublic="$(echo "$x25519" | grep "Password" | awk '{print $2}')"
-  cat > $serverjson << XTLSREALITYXHTTP
+  cat > $serverjson << JSON
 {
   "log": {
     "loglevel": "warning",
@@ -312,11 +312,11 @@ Xray(){
 //1、reality+vision 客户端仅使用 www.example.com 域名连接。
 //2、xhttp+tls 客户端可随意使用 www.example.com 或 cdn.example.com 域名连接。
 //3、reality+xhttp 客户端仅使用 www.example.com 域名连接。
-XTLSREALITYXHTTP
-  service xray restart && purple "Xray配置完成！"
+JSON
+  service $servername restart && purple "Xray配置完成！"
 }
 
-Service(){
+SERVICE(){
   if [ "$release" == alpine ]; then
     if [ ! -f "$MKservice" ]; then
       cat > $MKservice << INITD
@@ -372,7 +372,7 @@ SYSTEM
   fi
 }
 
-Download(){
+DOWNLOAD(){
   while true; do
     while true; do
       blue "$serverurl，正在下载。"
@@ -400,17 +400,17 @@ Download(){
   if [ -f "$MKservice" ]; then service $servername restart; fi
 }
 
-Domain(){
+DOMAIN(){
   readp "请输入域名：" serverdomain
   purple "域名：$serverdomain"
   while true; do readp "请确认域名[Yes/No]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac; done
 }
 
-Cert(){
+CERT(){
   blue "申请SSL证书。"
   echo -e "#!/usr/bin/env bash\nservice nginx restart" > /etc/letsencrypt/renewal-hooks/deploy/renewcert.sh && chmod +x /etc/letsencrypt/renewal-hooks/deploy/renewcert.sh
   echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconf
-  service nginx restart && certbot --nginx --force-renewal --agree-tos -n -m ssl@cert.bot -d $serverdomain --test-cert
+  service nginx restart && certbot --nginx --force-renewal --agree-tos -n -m ssl@cert.bot -d $serverdomain
   echo -e "0 0 1 * * certbot renew --renew-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
 }
 
@@ -425,7 +425,7 @@ SSHD(){
   fi
 }
 
-RandomMD5() {
+RANDOMMD5() {
   local chars="abcdefghijklmnopqrtuxyz"
   local servermd5=""
   for i in {1..10}; do
@@ -435,7 +435,7 @@ RandomMD5() {
   echo "$servermd5"
 }
 
-SaltMD5(){
+SALTMD5(){
   if [[ -f "${subscribepath}/subscribe" && -n "$(cat ${subscribepath}/subscribe)" ]]; then
     serversalt="$(cat ${subscribepath}/subscribe)"
   else
@@ -443,7 +443,7 @@ SaltMD5(){
     echo "$serversalt" > ${subscribepath}/subscribe
   fi
   if [[ -z "$serversalt" ]]; then
-    serversalt="$(RandomMD5)"
+    serversalt="$(RANDOMMD5)"
     echo "$serversalt" > ${subscribepath}/subscribe
   fi
   rm -rf ${subscribepath}/xclient/*
@@ -457,7 +457,7 @@ SaltMD5(){
   blue "Xray"; purple "$subxlink"; $qrcmd "$subxlink"; blue "Mihomo"; purple "$submlink"; $qrcmd "$submlink"; cyan "\n"
 }
 
-Subscribe(){
+SUBSCRIBE(){
   xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
   xdest="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1{print $4}')"
@@ -515,7 +515,7 @@ proxies:
 MSUB
 }
 
-MenuNginx(){
+Nginx(){
   while true; do
     purple "检测到$xdomain证书。"
     blue "1、续签证书"
@@ -523,15 +523,15 @@ MenuNginx(){
     blue "3、退出"
     readp "请输入选项：" option
     case "$option" in
-      1) Cert; Nginx; return;;
-      2) rm -rf /etc/letsencrypt/{live,renewal,archive}; Domain; Cert; Subscribe; Nginx; return;;
+      1) CERT; WEB; return;;
+      2) rm -rf /etc/letsencrypt/{live,renewal,archive}; DOMAIN; CERT; SUBSCRIBE; WEB; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
   done
 }
 
-MenuXray(){
+Xray(){
   while true; do
     purple "检测到$xversion版本。"
     blue "1、升级内核"
@@ -539,8 +539,8 @@ MenuXray(){
     blue "3、退出"
     readp "请输入选项：" option
     case "$option" in
-      1) Download; return;;
-      2) Subscribe; SaltMD5; return;;
+      1) DOWNLOAD; return;;
+      2) SUBSCRIBE; SALTMD5; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
@@ -551,9 +551,9 @@ if ! type $CVservice >/dev/null 2>&1; then blue "开始安装。"; $INservice; f
   
 if [ ! -f "$serverjson" ]; then
   if [  -f "$serverproc" ]; then
-    Domain; Xray; Subscribe; Nginx; SaltMD5
+    DOMAIN; JSON; SUBSCRIBE; WEB; SALTMD5
   else
-    Domain; HTTP; Download; Xray; Cert; Subscribe; Nginx; Service; SaltMD5; #SSHD
+    DOMAIN; HTTP; DOWNLOAD; JSON; CERT; SUBSCRIBE; WEB; SERVICE; SALTMD5; #SSHD
   fi
 fi
 
@@ -568,8 +568,8 @@ while true; do
   blue "3、Exit"
   readp "请输入选项：" option
   case "$option" in
-    1) MenuXray; continue;;
-    2) MenuNginx; continue;;
+    1) Xray; continue;;
+    2) Nginx; continue;;
     3) break;;
     *) red "请重新输入！"; continue;;
   esac
