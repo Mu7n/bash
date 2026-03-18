@@ -407,7 +407,7 @@ Cert(){
   blue "申请SSL证书。"
   echo -e "#!/usr/bin/env bash\nservice nginx restart" > /etc/letsencrypt/renewal-hooks/deploy/renewcert.sh && chmod +x /etc/letsencrypt/renewal-hooks/deploy/renewcert.sh
   echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconf
-  service nginx restart && certbot --nginx --force-renewal --agree-tos -n -m ssl@cert.bot -d $serverdomain
+  service nginx restart && certbot --nginx --force-renewal --agree-tos -n -m ssl@cert.bot -d $serverdomain --dry-run
   echo -e "0 0 1 * * certbot renew --renew-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
 }
 
@@ -455,11 +455,12 @@ SaltMD5(){
 }
 
 Subscribe(){
-  local xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
-  local xdest="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
-  local xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1{print $4}')"
-  local xpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
-  local xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
+  local xdomain xdest xuuid xpublic xsid
+  xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
+  xdest="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
+  xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1{print $4}')"
+  xpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
+  xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
   #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   #xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   mkdir -p -m 644 $subscribepath
