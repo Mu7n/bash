@@ -455,7 +455,6 @@ SaltMD5(){
 }
 
 Subscribe(){
-  local xdomain xdest xuuid xpublic xsid
   xdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
   xdest="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1{print $4}')"
