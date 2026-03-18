@@ -336,16 +336,16 @@ command="$serverproc"
 command_args="run -confdir \$confdir"
 required_files="\$confdir"
 depend() {
-	need net
-	want dns ntp-client
-	after firewall
+  need net
+  want dns ntp-client
+  after firewall
 }
 checkconfig() {
-	\$command \$command_args -test
-	eend \$?
+  \$command \$command_args -test
+  eend \$?
 }
 start_pre() {
-	checkconfig || return 1
+  checkconfig || return 1
 }
 INITD
       chmod +x $MKservice; $ENservice; service $servername start
