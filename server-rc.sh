@@ -454,7 +454,7 @@ SALTMD5(){
   echo "$serverbase" > ${subscribepath}/xclient/${serveruser}
   subxlink="https://${xdomain}/s/xclient/${serveruser}"
   submlink="https://${xdomain}/s/mclient/${serveruser}"
-  blue "Xray"; purple "$subxlink"; $qrcmd "$subxlink"; blue "Mihomo"; purple "$submlink"; $qrcmd "$submlink"; cyan "\n"
+  blue "\nXray\n"; purple "$subxlink"; $qrcmd "$subxlink"; blue "Mihomo\n"; purple "$submlink"; $qrcmd "$submlink"
 }
 
 SUBSCRIBE(){
@@ -556,7 +556,7 @@ if [ ! -f "$serverjson" ]; then
   fi
 fi
 
-purple "\nMu"
+purple "\nMu\n"
 
 while true; do
   xversion="$(xray version | awk 'NR==1 {print $2}')"
@@ -574,4 +574,4 @@ while true; do
   esac
 done
 
-purple "\nEnd!"
+purple "\nEnd!\n"
