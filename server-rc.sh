@@ -468,7 +468,6 @@ SUBSCRIBE(){
   mkdir -p -m 644 $subscribepath
   mkdir -p -m 644 $subscribepath/xclient
   mkdir -p -m 644 $subscribepath/mclient
-  echo "$xdomain; $xdest"
   if [ "$xdest" != "$xdomain" ]; then sed -i "s/${xdest}/${xdomain}/g" $serverjson; service $servername restart; purple "配置已修改。"; fi
   cat > ${subscribepath}/xray << XSUB
 vless://${xuuid}@${xdest}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdest}&pbk=${xpublic}&sid=${xsid}#reality xtls
