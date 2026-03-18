@@ -28,7 +28,7 @@ if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-r
   INservice="apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw"
   nginxpid="/run/nginx/nginx.pid"
   nginxconf="/etc/nginx/http.d/default.conf"
-  qrcmd="qr --ascii --optimize=20"
+  qrcmd="qr --ascii"
 elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
   release="debian"
   MKservice="/etc/systemd/system/${servername}.service"
@@ -454,7 +454,7 @@ SALTMD5(){
   echo "$serverbase" > ${subscribepath}/xclient/${serveruser}
   subxlink="https://${serverdomain}/s/xclient/${serveruser}"
   submlink="https://${serverdomain}/s/mclient/${serveruser}"
-  blue "\nXray\n"; purple "$subxlink"; $qrcmd "$subxlink"; blue "Mihomo\n"; purple "$submlink"; $qrcmd "$submlink"
+  blue "\nXray\n"; purple "$subxlink\n"; $qrcmd "$subxlink"; blue "\nMihomo\n"; purple "$submlink\n"; $qrcmd "$submlink"
 }
 
 SUBSCRIBE(){
