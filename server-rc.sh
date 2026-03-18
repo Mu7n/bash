@@ -133,10 +133,6 @@ server {
     server_name $serverdomain;
     ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem;
     ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem;
-    location ~ ^/s/(xclient|mclient)/(.*) {
-        default_type 'text/plain; charset=utf-8';
-        alias ${subscribepath}/\$1/\$2;
-    }
     location /${xpublic} { #与 reality-xhttp 中 path 对应
         grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
         grpc_set_header Host \$host;
