@@ -401,13 +401,13 @@ DOWNLOAD(){
 DOMAIN(){
   readp "请输入域名：" serverdomain
   purple "域名：$serverdomain"
-  while true; do readp "请确认域名[Yes/No]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac; done
+  while true; do readp "请确认域名[yes/no]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac; done
 }
 
 CERT(){
   blue "申请SSL证书。"
   echo -e "#!/usr/bin/env bash\nservice nginx restart" > /etc/letsencrypt/renewal-hooks/post/nginx-reload.sh && chmod a+x /etc/letsencrypt/renewal-hooks/post/nginx-reload.sh
-  echo -e "0 0 1 * * certbot renew --renew-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
+  echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
   echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconf
   service nginx restart && certbot --nginx --force-renewal --agree-tos -n -m ssl@cert.bot -d $serverdomain
 }
@@ -427,7 +427,7 @@ SALTMD5(){
   if [[ -f "${subscribepath}/subscribe" && -n "$(cat ${subscribepath}/subscribe)" ]]; then
     serversalt="$(cat ${subscribepath}/subscribe)"
   else
-    readp "请输入salt值，[enter]使用默认值：" serversalt
+    readp "请输入salt值：" serversalt
     echo "$serversalt" > ${subscribepath}/subscribe
   fi
   rm -rf ${subscribepath}/x/*
