@@ -24,29 +24,26 @@ if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-r
   release="alpine"
   MKservice="/etc/init.d/${servername}"
   ENservice="rc-update add $servername"
-  CVservice=""nginx" "certbot" "unzip" "tar" "qr" "ufw""
-  INservice="apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw"
   nginxpid="/run/nginx/nginx.pid"
   nginxconf="/etc/nginx/http.d/default.conf"
   qrcmd="qr --ascii"
+  if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
 elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
   release="debian"
   MKservice="/etc/systemd/system/${servername}.service"
   ENservice="systemctl enable $servername"
-  CVservice=""nginx" "certbot" "unzip" "tar" "qrencode" "ufw""
-  INservice="apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw"
   nginxpid="/run/nginx.pid"
   nginxconf="/etc/nginx/sites-enabled/default"
   qrcmd="qrencode -m 1 -t UTF8i"
+  if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
 elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
   release="ubuntu"
   MKservice="/etc/systemd/system/${servername}.service"
   ENservice="systemctl enable $servername"
-  CVservice=""nginx" "certbot" "unzip" "tar" "qrencode" "ufw""
-  INservice="apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw"
   nginxpid="/run/nginx.pid"
   nginxconf="/etc/nginx/sites-enabled/default"
   qrcmd="qrencode -m 1 -t UTF8i"
+  if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
 fi
 if [ -z "$release" ]; then red "未知系统！"; exit 0; fi
 
