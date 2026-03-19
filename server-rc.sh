@@ -494,7 +494,7 @@ MSUB
 
 Nginx(){
   while true; do
-    purple "检测到$serverdomain证书。"
+    purple "\n检测到$serverdomain证书。"
     blue "1、续签证书"
     blue "2、更改域名"
     blue "3、退出"
@@ -510,7 +510,7 @@ Nginx(){
 
 Xray(){
   while true; do
-    purple "检测到$serverversion版本。"
+    purple "\n检测到$serverversion版本。"
     blue "1、升级内核"
     blue "2、订阅链接"
     blue "3、退出"
@@ -529,7 +529,7 @@ Menu(){
     serverversion="$(xray version | awk 'NR==1 {print $2}')"
     serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
     xdomain="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
-    if [ -z "$xdomain"]; then JSON; WEB; elif [ "$serverdomain" != "$xdomain" ]; then sed -i "s/${xdomain}/${serverdomain}/g" $serverjson; service $servername restart; purple "配置已同步。"; fi
+    if [ -z "$xdomain" ]; then JSON; WEB; elif [ "$serverdomain" != "$xdomain" ]; then sed -i "s/${xdomain}/${serverdomain}/g" $serverjson; service $servername restart; purple "配置已同步。"; fi
     purple "\n"
     blue "1、Xray"
     blue "2、Nginx"
