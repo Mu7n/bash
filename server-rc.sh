@@ -417,25 +417,11 @@ SSHD(){
   fi
 }
 
-RANDOMMD5() {
-  local chars="abcdefghijklmnopqrtuxyz"
-  local servermd5=""
-  for i in {1..10}; do
-    echo "${i}" >/dev/null
-     servermd5+="${chars:RANDOM%${#chars}:1}"
-  done
-  echo "$servermd5"
-}
-
 SALTMD5(){
   if [[ -f "${subscribepath}/subscribe" && -n "$(cat ${subscribepath}/subscribe)" ]]; then
     serversalt="$(cat ${subscribepath}/subscribe)"
   else
     readp "请输入salt值，[enter]使用默认值：" serversalt
-    echo "$serversalt" > ${subscribepath}/subscribe
-  fi
-  if [[ -z "$serversalt" ]]; then
-    serversalt="$(RANDOMMD5)"
     echo "$serversalt" > ${subscribepath}/subscribe
   fi
   rm -rf ${subscribepath}/x/*
@@ -539,15 +525,12 @@ Xray(){
 }
 
 Menu(){
-  serverversion="$(xray version | awk 'NR==1 {print $2}')"
-  serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
-  xdomain="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
-  if [ -z "$xdomain"]; then
-    JSON; WEB
-  elif [ "$serverdomain" != "$xdomain" ]; then
-    sed -i "s/${xdomain}/${serverdomain}/g" $serverjson; service $servername restart; purple "配置已同步。"
-  fi
   while true; do
+    serverversion="$(xray version | awk 'NR==1 {print $2}')"
+    serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
+    xdomain="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
+    if [ -z "$xdomain"]; then JSON; WEB; elif [ "$serverdomain" != "$xdomain" ]; then sed -i "s/${xdomain}/${serverdomain}/g" $serverjson; service $servername restart; purple "配置已同步。"; fi
+    purple "\n"
     blue "1、Xray"
     blue "2、Nginx"
     blue "3、Exit"
@@ -571,8 +554,8 @@ if [ ! -f "$serverjson" ]; then
   fi
 fi
 
-purple "\nMu\n"
+purple "\nMu"
 
 Menu
 
-purple "\nEnd!\n"
+purple "\nEnd!"
