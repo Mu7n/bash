@@ -602,7 +602,7 @@ if [ ! -f "$serverjson" ]; then
   if [  -f "$serverproc" ]; then
     DOMAIN; REALITY; SUBSCRIBE; DEST; SALTMD5
   else
-    DOMAIN; HTTP; DOWNLOAD; REALITY; CERT; SUBSCRIBE; DEST; SERVICE; SALTMD5; #SSHD
+    DOMAIN; HTTP; DOWNLOAD; SERVICE; REALITY; CERT; SUBSCRIBE; DEST; SALTMD5; #SSHD
   fi
 fi
 
