@@ -1,7 +1,38 @@
 #!/usr/bin/env bash
 
-set -u
+#用到哪，学到哪。
+#bash <(curl -sSL https://get.docker.com)；安装docker
+#export PATH="/目录/文件:$PATH"；ln -s ${文件} /usr/local/bin；终端输入进程/脚本名称可直接运行
+#vim按下i进入编辑模式；按下ecs退出编辑模式；输入:wq!强制保存退出；输入:q!退出不保存
+#iptables -A INPUT -p tcp --dport 端口 -j ACCEPT
+#systemctl status 进程；service 进程 status
+#ps -ef | grep 进程 | grep -v grep | awk '{print $2}'；查找进程ID
+#awk -F '"' '{print $4}' | cut -c 2-；以' " '分隔号；-c 2显示第二个字符；-c 2-从第二个字符开始显示
+#awk中/ /是正则表达式；^表示字符串中开始的位置；d/-分别是权限中开始字符
+#ls -l /目录 | awk '/^d/ {print $NF}'；打印/目录下的子目录
+#ls -l /目录 | awk '/^-/ {print $NF}'；打印/目录下的文件
+#sed -i 's/目标/替换/g; s/目标/替换/g' /目录/文件
+#sed -i "s/目标/$替换/g" /目录/文件；引用变量需要把'换成"或'"$替换"'
+#sed -i '$a '"$变量"'\n文本' /目录/文件；在最后一行$a插入；引用变量需要'"$"'
+#echo -e "文本\n换行\n" > /目录/文件；不存在则创建，存在则覆盖
+#tar -zcvf 文件.tar.gz /目录
+#tar -xzvf /目录/文件.tar.gz -C /解压指定目录
+#base64 -w 0 Mu.tar.gz > Mu.txt；base64编码
+#base64 -d /etc/nginx/Mu.txt > /etc/nginx/Mu.tar.gz；base64解码
+#cat > file << EOF；覆盖&转义(文本中不需要转义的特殊符号前加\)
+#cat >> file << 'EOF'；追加&禁止转义(开头EOF加上''即可)
+#set -ue(退出报错)；set -x(显示命令)
+# ！(非、不是)；
+#if [ -s 文件 ]；如果文件存在且大小大于0
+#if [ ! -f 文件 ]；如果文件不存在
+#if [ -z $string ]；如果变量长度为0
+#if [ ! -z $string ]；如果变量非空
+#if ! 命令;then；如果命令失败则
+#if ! grep "查询" /目录/文件;then；如果未检索到则
+#命令 >/dev/null；正确信息输出到/dev/null；错误信息显示到屏幕
+#命令 >/dev/null 2>&1；全部信息输出到/dev/null
 
+set -u
 red(){  echo -e "\e[31m$1\e[0m";}
 blue(){  echo -e "\e[34m$1\e[0m";}
 purple(){  echo -e "\e[35m$1\e[0m";}
