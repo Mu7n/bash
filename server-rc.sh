@@ -56,27 +56,27 @@ pid #nginx.pid;
 worker_processes auto;
 error_log /var/log/nginx/error.log;
 events {
-    multi_accept on;
-    worker_connections 1024;
+  multi_accept on;
+  worker_connections 1024;
 }
 http {
-    include mime.types;
-    default_type application/octet-stream;
-    map $http_x_forwarded_for $client_ip { #创建自定义变量 $client_ip 实现 CDN 获取到客户端真实 IP
-        "" $remote_addr;
-        "~*(?P<firstAddr>([0-9a-f]{0,4}:){1,7}[0-9a-f]{1,4}|([0-9]{1,3}\.){3}[0-9]{1,3})$" $firstAddr;
-    }
-    log_format main '$client_ip - $remote_user [$time_local] "$request" '
-                    '$status $body_bytes_sent "$http_referer" '
-                    '"$http_user_agent" "$http_x_forwarded_for"';
-    access_log /var/log/nginx/access.log main;
-    sendfile on;
-    server_tokens off;
-    keepalive_timeout 65;
-    ssl_prefer_server_ciphers on;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
-    include #/etc/nginx;
+  include mime.types;
+  default_type application/octet-stream;
+  map $http_x_forwarded_for $client_ip {
+    "" $remote_addr;
+    "~*(?P<firstAddr>([0-9a-f]{0,4}:){1,7}[0-9a-f]{1,4}|([0-9]{1,3}\.){3}[0-9]{1,3})$" $firstAddr;
+  } #创建自定义变量 $client_ip 实现 CDN 获取到客户端真实 IP
+  log_format main '$client_ip - $remote_user [$time_local] "$request"'
+                  '$status $body_bytes_sent "$http_referer"'
+                  '"$http_user_agent" "$http_x_forwarded_for"';
+  access_log /var/log/nginx/access.log main;
+  sendfile on;
+  server_tokens off;
+  keepalive_timeout 65;
+  ssl_prefer_server_ciphers on;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+  include #/etc/nginx;
 }
 CONFIG
   if [ grep -qi "#nginx.pid" /etc/nginx/nginx.conf; ] || [ grep -qi "#/etc/nginx" /etc/nginx/nginx.conf; ]; then sed -i "s|#nginx.pid|${nginxpid}|g; s|#/etc/nginx|${nginxconf}|g" /etc/nginx/nginx.conf; fi
@@ -91,66 +91,57 @@ CONFIG
 WEB(){
   cat > $nginxconf << DEST
 server {
-    listen 80;
-    listen [::]:80;
-    return 301 https://\$host\$request_uri;
-}
-server { #限定域名连接，禁止其他方式访问网站
-    listen 127.0.0.1:44380 ssl http2 proxy_protocol default_server;
-    set_real_ip_from 127.0.0.1;
-    real_ip_header proxy_protocol;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_reject_handshake on;
+  listen 80;
+  listen [::]:80;
+  return 301 https://\$host\$request_uri;
 }
 server {
-    listen 127.0.0.1:44380 ssl http2 proxy_protocol;
-    set_real_ip_from 127.0.0.1;
-    real_ip_header proxy_protocol;
-    server_name cdn$serverdomain; #修改为 CDN 域名
-    ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem; #修改为 CDN 域名证书
-    ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem; #修改为 CDN 域名证书
-    location /${xpublic} { #与 reality-xhttp 中 path 对应
-        grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
-        grpc_set_header Host \$host;
-        grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-    }
-    location / {
-        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-        root /etc/nginx/Mu;
-        index index.html index.htm;
-    }
+  listen 127.0.0.1:44380 ssl http2 proxy_protocol default_server;
+  set_real_ip_from 127.0.0.1;
+  real_ip_header proxy_protocol;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_reject_handshake on;
+} #限定域名连接，禁止其他方式访问网站
+server {
+  listen 127.0.0.1:44380 ssl http2 proxy_protocol;
+  set_real_ip_from 127.0.0.1;
+  real_ip_header proxy_protocol;
+  server_name cdn$serverdomain; #修改 CDN 域名
+  ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
+  ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
+  location /${xpublic} { #与 reality-xhttp 中 path 对应
+    grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
+    grpc_set_header Host \$host;
+    grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+  }
+  location / {
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    root /etc/nginx/Mu;
+  }
 }
 server {
-    #listen 443 quic reuseport; #仅版本不小于 v1.25.0 且 SSL 库支持 QUIC。
-    #listen [::]:443 quic reuseport; #仅版本不小于 v1.25.0 且 SSL 库支持 QUIC。
-    listen 127.0.0.1:44380 ssl http2 proxy_protocol;
-    set_real_ip_from 127.0.0.1;
-    real_ip_header proxy_protocol;
-    server_name $serverdomain;
-    ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem;
-    ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem;
-    location /${xpublic} { #与 reality-xhttp 中 path 对应
-        grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
-        grpc_set_header Host \$host;
-        grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-    }
-    location / {
-        add_header Alt-Svc 'h3=":443"; ma=86400'; #通告 HTTP/3 server 的可用性
-        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-        root /etc/nginx/Mu;
-        index index.html index.htm;
-    }
-}
-server {
-    listen 58598 ssl http2 so_keepalive=on;
-    listen [::]:58598 ssl http2 so_keepalive=on;
-    server_name $serverdomain;
-    ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem;
-    ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem;
-    location ~ ^/s/(xclient|mclient)/(.*) {
-        default_type 'text/plain; charset=utf-8';
-        alias ${subscribepath}/\$1/\$2;
-    }
+  #listen 443 quic reuseport; #仅版本不小于 v1.25.0 且 SSL 库支持 QUIC。
+  #listen [::]:443 quic reuseport; #仅版本不小于 v1.25.0 且 SSL 库支持 QUIC。
+  listen 127.0.0.1:44380 ssl http2 proxy_protocol;
+  set_real_ip_from 127.0.0.1;
+  real_ip_header proxy_protocol;
+  server_name $serverdomain;
+  ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem;
+  ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem;
+  location /${xpublic} { #与 reality-xhttp 中 path 对应
+    grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
+    grpc_set_header Host \$host;
+    grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+  }
+  location / {
+    add_header Alt-Svc 'h3=":443"; ma=86400'; #通告 HTTP/3 server 的可用性
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    root /etc/nginx/Mu;
+  }
+  location ~ ^/s/(xclient|mclient)/(.*) {
+    default_type 'text/plain; charset=utf-8';
+    alias ${subscribepath}/\$1/\$2;
+  }
 }
 #1、reality+vision 客户端仅使用 www.example.com 域名连接。
 #2、xhttp+tls 客户端可随意使用 www.example.com 或 cdn.example.com 域名连接。
