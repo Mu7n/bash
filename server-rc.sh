@@ -90,7 +90,7 @@ HTTP
 
 DEST(){
   nginxversion="$(nginx -v 2>&1)"
-  nginxpublic="/$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
+  nginxpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
   if [ "$(echo "$nginxversion" | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(echo "$nginxversion" | awk -F '.' '{print $3}')" -gt 0 ]; then
     nginxhttp="ssl proxy_protocol;http2 on;"
   else
@@ -160,7 +160,7 @@ REALITY(){
   serveruuid="$(xray uuid)"
   serverreality="$(xray x25519)"
   serverprivate="$(echo "$serverkey" | grep "PrivateKey" | awk '{print $2}')"
-  serverpublic="/$(echo "$serverkey" | grep "Password" | awk '{print $2}')"
+  serverpublic="$(echo "$serverkey" | grep "Password" | awk '{print $2}')"
   cat > $serverjson << REALITY
 {
   "log": {
@@ -238,7 +238,7 @@ REALITY(){
         "xhttpSettings": {
           "host": "",  // 服务端不验证 host 客户端玩法更多
           "mode": "auto",  // 服务端设置 auto 客户端玩法更多
-          "path": "${serverpublic}"
+          "path": "/${serverpublic}"
         }
       },
       "sniffing": {
@@ -444,7 +444,7 @@ SALTMD5(){
 SUBSCRIBE(){
   xdomain="$(grep '"serverNames"' $serverjson | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1{print $4}')"
-  xpublic="/$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
+  xpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
   xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
   #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   #xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
