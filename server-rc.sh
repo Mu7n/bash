@@ -242,7 +242,7 @@ JSON(){
     },
     {
       "tag": "mkcp",
-      "port": 23710,
+      "port": 10723,
       "protocol": "vless",
       "settings": {
         "clients": [
@@ -270,7 +270,7 @@ JSON(){
             {
               "type": "mkcp-aes128gcm",
               "settings": {
-              "password": "$xuuid"
+                "password": "$xuuid"
               }
             }
           ]
