@@ -598,8 +598,6 @@ Menu(){
 
 purple "\nMu"
 
-if ! type $CVservice >/dev/null 2>&1; then blue "开始安装。"; $INservice; fi
-
 if [ ! -f "$serverjson" ]; then
   if [  -f "$serverproc" ]; then
     DOMAIN; REALITY; SUBSCRIBE; DEST; SALTMD5
