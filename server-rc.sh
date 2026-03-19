@@ -158,9 +158,9 @@ DEST
 
 REALITY(){
   serveruuid="$(xray uuid)"
-  serverreality="$(xray x25519)"
-  serverprivate="$(echo "$serverkey" | grep "PrivateKey" | awk '{print $2}')"
-  serverpublic="$(echo "$serverkey" | grep "Password" | awk '{print $2}')"
+  serverx25519="$(xray x25519)"
+  serverprivate="$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')"
+  serverpublic="$(echo "$serverx25519" | grep "Password" | awk '{print $2}')"
   cat > $serverjson << REALITY
 {
   "log": {
