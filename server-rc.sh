@@ -70,13 +70,9 @@ http {
                     '$status $body_bytes_sent "$http_referer" '
                     '"$http_user_agent" "$http_x_forwarded_for"';
     access_log /var/log/nginx/access.log main;
-    gzip on;
     sendfile on;
-    tcp_nopush on;
-    tcp_nodelay on;
     server_tokens off;
     keepalive_timeout 65;
-    ssl_session_tickets off;
     ssl_prefer_server_ciphers on;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
@@ -125,8 +121,8 @@ server {
     }
 }
 server {
-    #listen 443 quic reuseport; #仅版本不小于 v1.25.0 且 SSL 库支持 QUIC 才配置，否则必须删除。
-    #listen [::]:443 quic reuseport; #仅版本不小于 v1.25.0 且 SSL 库支持 QUIC 才配置，否则必须删除。
+    #listen 443 quic reuseport; #仅版本不小于 v1.25.0 且 SSL 库支持 QUIC。
+    #listen [::]:443 quic reuseport; #仅版本不小于 v1.25.0 且 SSL 库支持 QUIC。
     listen 127.0.0.1:44380 ssl http2 proxy_protocol;
     set_real_ip_from 127.0.0.1;
     real_ip_header proxy_protocol;
@@ -139,7 +135,7 @@ server {
         grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     }
     location / {
-        #add_header Alt-Svc 'h3=":443"; ma=86400'; #通告 HTTP/3 server 的可用性
+        add_header Alt-Svc 'h3=":443"; ma=86400'; #通告 HTTP/3 server 的可用性
         add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
         root /etc/nginx/Mu;
         index index.html index.htm;
@@ -530,7 +526,7 @@ Nginx(){
     readp "请输入选项：" option
     case "$option" in
       1) CERT; WEB; return;;
-      2) rm -rf /etc/letsencrypt/{live,renewal,archive}; DOMAIN; CERT; SUBSCRIBE; WEB; return;;
+      2) rm -rf $sslpath; DOMAIN; CERT; SUBSCRIBE; WEB; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
