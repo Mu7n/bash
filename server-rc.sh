@@ -109,7 +109,7 @@ server {
   server_name cdn$serverdomain; #修改 CDN 域名
   ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
   ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
-  location /${xpublic} { #与 reality-xhttp 中 path 对应
+  location ${xpublic} { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -128,7 +128,7 @@ server {
   server_name $serverdomain;
   ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem;
   ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem;
-  location /${xpublic} { #与 reality-xhttp 中 path 对应
+  location ${xpublic} { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -438,14 +438,14 @@ SALTMD5(){
     serversalt="$(RANDOMMD5)"
     echo "$serversalt" > ${subscribepath}/subscribe
   fi
-  rm -rf ${subscribepath}/xclient/*
-  rm -rf ${subscribepath}/mclient/*
+  rm -rf ${subscribepath}/x/*
+  rm -rf ${subscribepath}/m/*
   serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
-  cat ${subscribepath}/mihomo >> ${subscribepath}/mclient/${serveruser}
+  cat ${subscribepath}/mihomo >> ${subscribepath}/m/${serveruser}
   serverbase="$(base64 -w 0 ${subscribepath}/xray)"
-  echo "$serverbase" > ${subscribepath}/xclient/${serveruser}
-  subxlink="https://${serverdomain}/s/xclient/${serveruser}"
-  submlink="https://${serverdomain}/s/mclient/${serveruser}"
+  echo "$serverbase" > ${subscribepath}/x/${serveruser}
+  subxlink="https://${serverdomain}/s/x/${serveruser}"
+  submlink="https://${serverdomain}/s/m/${serveruser}"
   blue "\nXray\n"; purple "$subxlink\n"; $qrcmd "$subxlink"; blue "\nMihomo\n"; purple "$submlink\n"; $qrcmd "$submlink"
 }
 
@@ -531,15 +531,38 @@ Xray(){
     readp "请输入选项：" option
     case "$option" in
       1) DOWNLOAD; return;;
-      2) if [ -z "$xdomain"]; then JSON; WEB; elif [ "$serverdomain" != "$xdomain" ]; then sed -i "s/${xdomain}/${serverdomain}/g" $serverjson; service $servername restart; purple "配置已修改。"; fi; SUBSCRIBE; SALTMD5; return;;
+      2) SUBSCRIBE; SALTMD5; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
   done
 }
 
+Menu(){
+  serverversion="$(xray version | awk 'NR==1 {print $2}')"
+  serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
+  xdomain="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
+  if [ -z "$xdomain"]; then
+    JSON; WEB
+  elif [ "$serverdomain" != "$xdomain" ]; then
+    sed -i "s/${xdomain}/${serverdomain}/g" $serverjson; service $servername restart; purple "配置已同步。"
+  fi
+  while true; do
+    blue "1、Xray"
+    blue "2、Nginx"
+    blue "3、Exit"
+    readp "请输入选项：" option
+    case "$option" in
+      1) Xray; continue;;
+      2) Nginx; continue;;
+      3) break;;
+      *) red "请重新输入！"; continue;;
+    esac
+  done
+}
+
 if ! type $CVservice >/dev/null 2>&1; then blue "开始安装。"; $INservice; fi
-  
+
 if [ ! -f "$serverjson" ]; then
   if [  -f "$serverproc" ]; then
     DOMAIN; JSON; SUBSCRIBE; WEB; SALTMD5
@@ -550,20 +573,6 @@ fi
 
 purple "\nMu\n"
 
-while true; do
-  serverversion="$(xray version | awk 'NR==1 {print $2}')"
-  serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
-  xdomain="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
-  blue "1、Xray"
-  blue "2、Nginx"
-  blue "3、Exit"
-  readp "请输入选项：" option
-  case "$option" in
-    1) Xray; continue;;
-    2) Nginx; continue;;
-    3) break;;
-    *) red "请重新输入！"; continue;;
-  esac
-done
+Menu
 
 purple "\nEnd!\n"
