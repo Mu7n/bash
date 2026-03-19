@@ -92,9 +92,9 @@ DEST(){
   nginxversion="$(nginx -v 2>&1)"
   nginxpublic="/$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
   if [ "$(echo "$nginxversion" | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(echo "$nginxversion" | awk -F '.' '{print $3}')" -gt 0 ]; then
-    nginxhttp="ssl proxy_protocol default_server;\n  http2 on;"
+    nginxhttp="ssl proxy_protocol;http2 on;"
   else
-    nginxhttp="ssl http2 proxy_protocol default_server;"
+    nginxhttp="ssl http2 proxy_protocol;"
   fi
   cat > $nginxconf << DEST
 server {
@@ -103,7 +103,7 @@ server {
   return 301 https://\$host\$request_uri;
 }
 server {
-  listen 127.0.0.1:44380 $nginxhttp
+  listen 127.0.0.1:44380 default_server $nginxhttp
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   ssl_protocols TLSv1.2 TLSv1.3;
