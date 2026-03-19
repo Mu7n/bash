@@ -406,10 +406,15 @@ DOMAIN(){
 }
 
 CERT(){
-  blue "申请SSL证书。"
-  echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
-  echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconf
-  service nginx restart && certbot --nginx --force-renewal --agree-tos -n -m ssl@cert.bot -d $serverdomain
+  if [ ! -d "${sslpath}/${servername}" ]; then
+    blue "申请SSL证书。"
+    rm -rf $sslpath
+    echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
+    echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconf
+    service nginx restart && certbot --nginx --force-renewal --agree-tos -n -m ssl@cert.bot -d $serverdomain
+  else
+    certbot renew --deploy-hook 'service nginx restart'
+  fi
 }
 
 SSHD(){
@@ -518,7 +523,7 @@ Nginx(){
     readp "请输入选项：" option
     case "$option" in
       1) CERT; DEST; return;;
-      2) rm -rf $sslpath; DOMAIN; CERT; REALITY; DEST; return;;
+      2) DOMAIN; CERT; REALITY; DEST; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
