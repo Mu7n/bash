@@ -514,6 +514,7 @@ Nginx(){
     blue "1、续签证书"
     blue "2、更改域名"
     blue "3、退出"
+    purple ""
     readp "请输入选项：" option
     case "$option" in
       1) CERT; DEST; return;;
@@ -530,6 +531,7 @@ Xray(){
     blue "1、升级内核"
     blue "2、订阅链接"
     blue "3、退出"
+    purple ""
     readp "请输入选项：" option
     case "$option" in
       1) DOWNLOAD; return;;
@@ -550,6 +552,7 @@ Menu(){
     blue "1、Xray"
     blue "2、Nginx"
     blue "3、Exit"
+    purple ""
     readp "请输入选项：" option
     case "$option" in
       1) Xray; continue;;
@@ -574,4 +577,4 @@ fi
 
 Menu
 
-purple "End!\n"
+purple "\nEnd!"
