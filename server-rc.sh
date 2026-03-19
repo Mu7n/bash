@@ -90,6 +90,7 @@ HTTP
 
 DEST(){
   nginxversion="$(nginx -v 2>&1)"
+  nginxpublic="/$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
   if [ "$(echo "$nginxversion" | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(echo "$nginxversion" | awk -F '.' '{print $3}')" -gt 0 ]; then
     nginxhttp="ssl proxy_protocol default_server;\n  http2 on;"
   else
@@ -115,7 +116,7 @@ server {
   server_name cdn$serverdomain; #修改 CDN 域名
   ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
   ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
-  location ${xpublic} { #与 reality-xhttp 中 path 对应
+  location ${nginxpublic} { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -134,7 +135,7 @@ server {
   server_name $serverdomain;
   ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem;
   ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem;
-  location ${xpublic} { #与 reality-xhttp 中 path 对应
+  location ${nginxpublic} { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -156,10 +157,10 @@ DEST
 }
 
 REALITY(){
-  xuuid="$(xray uuid)"
-  x25519="$(xray x25519)"
-  xprivate="$(echo "$x25519" | grep "PrivateKey" | awk '{print $2}')"
-  xpublic="/$(echo "$x25519" | grep "Password" | awk '{print $2}')"
+  serveruuid="$(xray uuid)"
+  serverreality="$(xray x25519)"
+  serverprivate="$(echo "$serverkey" | grep "PrivateKey" | awk '{print $2}')"
+  serverpublic="/$(echo "$serverkey" | grep "Password" | awk '{print $2}')"
   cat > $serverjson << REALITY
 {
   "log": {
@@ -190,7 +191,7 @@ REALITY(){
       "settings": {
         "clients": [
           {
-            "id": "$xuuid",
+            "id": "$serveruuid",
             "flow": "xtls-rprx-vision"
           }
         ],
@@ -208,7 +209,7 @@ REALITY(){
           "target": 44380,  //转发 Nginx 监听进程
           "xver": 1,
           "serverNames": ["$serverdomain"],
-          "privateKey": "$xprivate",
+          "privateKey": "$serverprivate",
           "shortIds": ["1a2b3c4d5e6f"]
         }
       },
@@ -226,7 +227,7 @@ REALITY(){
       "settings": {
         "clients": [
           {
-            "id": "$xuuid",
+            "id": "$serveruuid",
             "flow": ""
           }
         ],
@@ -237,7 +238,7 @@ REALITY(){
         "xhttpSettings": {
           "host": "",  // 服务端不验证 host 客户端玩法更多
           "mode": "auto",  // 服务端设置 auto 客户端玩法更多
-          "path": "${xpublic}"
+          "path": "${serverpublic}"
         }
       },
       "sniffing": {
@@ -253,7 +254,7 @@ REALITY(){
       "settings": {
         "clients": [
           {
-            "id": "$xuuid",
+            "id": "$serveruuid",
             "flow": ""
           }
         ],
@@ -276,7 +277,7 @@ REALITY(){
             {
               "type": "mkcp-aes128gcm",
               "settings": {
-                "password": "$xuuid"
+                "password": "$serveruuid"
               }
             }
           ]
@@ -406,7 +407,6 @@ DOMAIN(){
 
 CERT(){
   blue "申请SSL证书。"
-  echo -e "#!/usr/bin/env bash\nservice nginx restart" > /etc/letsencrypt/renewal-hooks/post/nginx-reload.sh && chmod a+x /etc/letsencrypt/renewal-hooks/post/nginx-reload.sh
   echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
   echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconf
   service nginx restart && certbot --nginx --force-renewal --agree-tos -n -m ssl@cert.bot -d $serverdomain
@@ -517,7 +517,7 @@ Nginx(){
     readp "请输入选项：" option
     case "$option" in
       1) CERT; DEST; return;;
-      2) rm -rf $sslpath; DOMAIN; CERT; SUBSCRIBE; DEST; return;;
+      2) rm -rf $sslpath; DOMAIN; CERT; REALITY; DEST; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
