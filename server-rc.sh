@@ -554,7 +554,7 @@ Menu(){
   done
 }
 
-purple "\nMu\n"
+purple "\nMu"
 
 if ! type $CVservice >/dev/null 2>&1; then blue "开始安装。"; $INservice; fi
 
@@ -568,4 +568,4 @@ fi
 
 Menu
 
-purple "\nEnd!\n"
+purple "End!\n"
