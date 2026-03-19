@@ -448,7 +448,7 @@ SUBSCRIBE(){
   cat > ${subscribepath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLS
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTP
-vless://${xuuid}@${xdomain}:10723?&type=kcp&headerType=utp&seed=${xuuid}#MKCP
+vless://${xuuid}@${xdomain}:10723?&type=kcp&headerType=utp&interval=30&seed=${xuuid}#XKCP
 
 XSUB
   cat > ${subscribepath}/mihomo << MSUB
@@ -487,7 +487,18 @@ proxies:
     udp: true
     packet-encoding: xudp
     client-fingerprint: chrome
-
+  - name: "XKCP"
+    type: vless
+    server: $xdomain
+    port: 10723
+    uuid: $xuuid
+    network: kcp
+    congestion-controller: bbr
+    up: "100"
+    down: "300"
+    hop-interval: 30
+    obfs: aes-128-gcm
+    obfs-password: $xuuid
 MSUB
 }
 
