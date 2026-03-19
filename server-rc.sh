@@ -494,7 +494,7 @@ MSUB
 
 Nginx(){
   while true; do
-    purple "\n检测到$serverdomain证书。"
+    purple "\n检测到$serverdomain证书。\n"
     blue "1、续签证书"
     blue "2、更改域名"
     blue "3、退出"
@@ -510,7 +510,7 @@ Nginx(){
 
 Xray(){
   while true; do
-    purple "\n检测到$serverversion版本。"
+    purple "\n检测到$serverversion版本。\n"
     blue "1、升级内核"
     blue "2、订阅链接"
     blue "3、退出"
@@ -530,7 +530,7 @@ Menu(){
     serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
     xdomain="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
     if [ -z "$xdomain" ]; then JSON; WEB; elif [ "$serverdomain" != "$xdomain" ]; then sed -i "s/${xdomain}/${serverdomain}/g" $serverjson; service $servername restart; purple "配置已同步。"; fi
-    purple "\n"
+    purple ""
     blue "1、Xray"
     blue "2、Nginx"
     blue "3、Exit"
@@ -544,6 +544,8 @@ Menu(){
   done
 }
 
+purple "\nMu\n"
+
 if ! type $CVservice >/dev/null 2>&1; then blue "开始安装。"; $INservice; fi
 
 if [ ! -f "$serverjson" ]; then
@@ -554,8 +556,6 @@ if [ ! -f "$serverjson" ]; then
   fi
 fi
 
-purple "\nMu"
-
 Menu
 
-purple "\nEnd!"
+purple "\nEnd!\n"
