@@ -89,6 +89,12 @@ HTTP
 }
 
 DEST(){
+  nginxversion="$(nginx -v 2>&1)"
+  if [ "$(echo "$nginxversion" | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(echo "$nginxversion" | awk -F '.' '{print $3}')" -gt 0 ]; then
+    nginxhttp="ssl proxy_protocol default_server;\n  http2 on;"
+  else
+    nginxhttp="ssl http2 proxy_protocol default_server;"
+  fi
   cat > $nginxconf << DEST
 server {
   listen 80;
@@ -96,14 +102,14 @@ server {
   return 301 https://\$host\$request_uri;
 }
 server {
-  listen 127.0.0.1:44380 ssl http2 proxy_protocol default_server;
+  listen 127.0.0.1:44380 $nginxhttp
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   ssl_protocols TLSv1.2 TLSv1.3;
   ssl_reject_handshake on;
 } #限定域名连接，禁止其他方式访问网站
 server {
-  listen 127.0.0.1:44380 ssl http2 proxy_protocol;
+  listen 127.0.0.1:44380 $nginxhttp
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   server_name cdn$serverdomain; #修改 CDN 域名
@@ -122,7 +128,7 @@ server {
 server {
   #listen 443 quic reuseport; #版本不小于 v1.25.0 且 SSL 库支持 QUIC
   #listen [::]:443 quic reuseport; #版本不小于 v1.25.0 且 SSL 库支持 QUIC
-  listen 127.0.0.1:44380 ssl http2 proxy_protocol;
+  listen 127.0.0.1:44380 $nginxhttp
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   server_name $serverdomain;
