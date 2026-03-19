@@ -20,7 +20,7 @@ serverurl="${serversite}/${servertag}/${serverfile}"
 sslpath="/etc/letsencrypt/live"
 subscribepath="/etc/aio/subscribe"
 
-if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release }; then
+if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release; }; then
   release="alpine"
   MKservice="/etc/init.d/${servername}"
   ENservice="rc-update add $servername"
@@ -29,7 +29,7 @@ if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue } || { [ -f "/etc/os-re
   nginxpid="/run/nginx/nginx.pid"
   nginxconf="/etc/nginx/http.d/default.conf"
   qrcmd="qr --ascii"
-elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release }; then
+elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
   release="debian"
   MKservice="/etc/systemd/system/${servername}.service"
   ENservice="systemctl enable $servername"
@@ -38,7 +38,7 @@ elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue } || { [ -f "/etc/os-
   nginxpid="/run/nginx.pid"
   nginxconf="/etc/nginx/sites-enabled/default"
   qrcmd="qrencode -m 1 -t UTF8i"
-elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release }; then
+elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
   release="ubuntu"
   MKservice="/etc/systemd/system/${servername}.service"
   ENservice="systemctl enable $servername"
