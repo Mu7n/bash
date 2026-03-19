@@ -481,9 +481,9 @@ SUBSCRIBE(){
   xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
   #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   #xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
-  mkdir -p -m 644 $subscribepath
-  mkdir -p -m 644 $subscribepath/x
-  mkdir -p -m 644 $subscribepath/m
+  mkdir -p -m 555 $subscribepath
+  mkdir -p -m 555 $subscribepath/x
+  mkdir -p -m 555 $subscribepath/m
   cat > ${subscribepath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLS
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTP
