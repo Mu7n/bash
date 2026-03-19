@@ -51,7 +51,7 @@ fi
 if [ -z "$release" ]; then red "未知系统！"; exit 0; fi
 
 HTTP(){
-  cat > /etc/nginx/nginx.conf << 'CONFIG'
+  cat > /etc/nginx/nginx.conf << 'HTTP'
 pid #nginx.pid;
 worker_processes auto;
 error_log /var/log/nginx/error.log;
@@ -78,7 +78,7 @@ http {
   ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
   include #/etc/nginx;
 }
-CONFIG
+HTTP
   if [ grep -qi "#nginx.pid" /etc/nginx/nginx.conf; ] || [ grep -qi "#/etc/nginx" /etc/nginx/nginx.conf; ]; then sed -i "s|#nginx.pid|${nginxpid}|g; s|#/etc/nginx|${nginxconf}|g" /etc/nginx/nginx.conf; fi
   if [ ! -d /etc/nginx/Mu ]; then
     blue "解压html。"
@@ -88,7 +88,7 @@ CONFIG
   fi
 }
 
-WEB(){
+DEST(){
   cat > $nginxconf << DEST
 server {
   listen 80;
@@ -149,12 +149,12 @@ DEST
   service nginx restart && purple "Nginx配置完成！"
 }
 
-JSON(){
+REALITY(){
   xuuid="$(xray uuid)"
   x25519="$(xray x25519)"
   xprivate="$(echo "$x25519" | grep "PrivateKey" | awk '{print $2}')"
   xpublic="/$(echo "$x25519" | grep "Password" | awk '{print $2}')"
-  cat > $serverjson << JSON
+  cat > $serverjson << REALITY
 {
   "log": {
     "loglevel": "warning",
@@ -178,7 +178,7 @@ JSON(){
   },
   "inbounds": [
     {
-      "tag": "vision",
+      "tag": "XTLS",
       "port": 443,
       "protocol": "vless",
       "settings": {
@@ -213,7 +213,7 @@ JSON(){
       }
     },
     {
-      "tag": "xhttp",
+      "tag": "XHTTP",
       "listen": "127.0.0.1",
       "port": 44308,
       "protocol": "vless",
@@ -241,7 +241,7 @@ JSON(){
       }
     },
     {
-      "tag": "mkcp",
+      "tag": "XKCP",
       "port": 10723,
       "protocol": "vless",
       "settings": {
@@ -304,7 +304,7 @@ JSON(){
 }
 #1、reality+vision 和 reality+xhttp 客户端仅使用 www.example.com 域名连接。
 #2、xhttp+tls 客户端可使用 www.example.com 或 cdn.example.com 域名连接。
-JSON
+REALITY
   service $servername restart && purple "Xray配置完成！"
 }
 
@@ -436,7 +436,6 @@ SALTMD5(){
 }
 
 SUBSCRIBE(){
-  serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
   xdomain="$(grep '"serverNames"' $serverjson | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1{print $4}')"
   xpublic="/$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
@@ -447,14 +446,14 @@ SUBSCRIBE(){
   mkdir -p -m 644 $subscribepath/x
   mkdir -p -m 644 $subscribepath/m
   cat > ${subscribepath}/xray << XSUB
-vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#reality xtls
-vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#reality xhttp
-vless://${xuuid}@${xdomain}:10723?&type=kcp&headerType=utp&seed=${xuuid}#mkcp
+vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLS
+vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTP
+vless://${xuuid}@${xdomain}:10723?&type=kcp&headerType=utp&seed=${xuuid}#MKCP
 
 XSUB
   cat > ${subscribepath}/mihomo << MSUB
 proxies:
-  - name: "reality xtls"
+  - name: "XTLS"
     type: vless
     server: $xdomain
     port: 443
@@ -470,7 +469,7 @@ proxies:
     udp: true
     packet-encoding: xudp
     client-fingerprint: chrome
-  - name: "reality xhttp"
+  - name: "XHTTP"
     type: vless
     server: $xdomain
     port: 443
@@ -500,8 +499,8 @@ Nginx(){
     blue "3、退出"
     readp "请输入选项：" option
     case "$option" in
-      1) CERT; WEB; return;;
-      2) rm -rf $sslpath; DOMAIN; CERT; SUBSCRIBE; WEB; return;;
+      1) CERT; DEST; return;;
+      2) rm -rf $sslpath; DOMAIN; CERT; SUBSCRIBE; DEST; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
@@ -529,7 +528,7 @@ Menu(){
     serverversion="$(xray version | awk 'NR==1 {print $2}')"
     serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
     xdomain="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
-    if [ -z "$xdomain" ]; then JSON; WEB; elif [ "$serverdomain" != "$xdomain" ]; then sed -i "s/${xdomain}/${serverdomain}/g" $serverjson; service $servername restart; purple "配置已同步。"; fi
+    if [ -z "$xdomain" ]; then REALITY; DEST; elif [ "$serverdomain" != "$xdomain" ]; then sed -i "s/${xdomain}/${serverdomain}/g" $serverjson; service $servername restart; purple "配置已同步。"; fi
     purple ""
     blue "1、Xray"
     blue "2、Nginx"
@@ -550,9 +549,9 @@ if ! type $CVservice >/dev/null 2>&1; then blue "开始安装。"; $INservice; f
 
 if [ ! -f "$serverjson" ]; then
   if [  -f "$serverproc" ]; then
-    DOMAIN; JSON; SUBSCRIBE; WEB; SALTMD5
+    DOMAIN; REALITY; SUBSCRIBE; DEST; SALTMD5
   else
-    DOMAIN; HTTP; DOWNLOAD; JSON; CERT; SUBSCRIBE; WEB; SERVICE; SALTMD5; #SSHD
+    DOMAIN; HTTP; DOWNLOAD; REALITY; CERT; SUBSCRIBE; DEST; SERVICE; SALTMD5; #SSHD
   fi
 fi
 
