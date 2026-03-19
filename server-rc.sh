@@ -115,13 +115,13 @@ server {
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
   }
   location / {
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
     root /etc/nginx/Mu;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
   }
 }
 server {
-  #listen 443 quic reuseport; #仅版本不小于 v1.25.0 且 SSL 库支持 QUIC。
-  #listen [::]:443 quic reuseport; #仅版本不小于 v1.25.0 且 SSL 库支持 QUIC。
+  #listen 443 quic reuseport; #版本不小于 v1.25.0 且 SSL 库支持 QUIC
+  #listen [::]:443 quic reuseport; #版本不小于 v1.25.0 且 SSL 库支持 QUIC
   listen 127.0.0.1:44380 ssl http2 proxy_protocol;
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
@@ -134,18 +134,17 @@ server {
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
   }
   location / {
+    root /etc/nginx/Mu;
     add_header Alt-Svc 'h3=":443"; ma=86400'; #通告 HTTP/3 server 的可用性
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-    root /etc/nginx/Mu;
   }
-  location ~ ^/s/(xclient|mclient)/(.*) {
+  location ~ ^/s/(x|m)/(.*) {
     default_type 'text/plain; charset=utf-8';
     alias ${subscribepath}/\$1/\$2;
   }
 }
-#1、reality+vision 客户端仅使用 www.example.com 域名连接。
-#2、xhttp+tls 客户端可随意使用 www.example.com 或 cdn.example.com 域名连接。
-#3、reality+xhttp 客户端仅使用 www.example.com 域名连接。
+#1、reality+vision 和 reality+xhttp 客户端仅使用 www.example.com 域名连接。
+#2、xhttp+tls 客户端可使用 www.example.com 或 cdn.example.com 域名连接。
 DEST
   service nginx restart && purple "Nginx配置完成！"
 }
@@ -154,7 +153,7 @@ JSON(){
   xuuid="$(xray uuid)"
   x25519="$(xray x25519)"
   xprivate="$(echo "$x25519" | grep "PrivateKey" | awk '{print $2}')"
-  xpublic="$(echo "$x25519" | grep "Password" | awk '{print $2}')"
+  xpublic="/$(echo "$x25519" | grep "Password" | awk '{print $2}')"
   cat > $serverjson << JSON
 {
   "log": {
@@ -303,9 +302,8 @@ JSON(){
     }
   }
 }
-//1、reality+vision 客户端仅使用 www.example.com 域名连接。
-//2、xhttp+tls 客户端可随意使用 www.example.com 或 cdn.example.com 域名连接。
-//3、reality+xhttp 客户端仅使用 www.example.com 域名连接。
+#1、reality+vision 和 reality+xhttp 客户端仅使用 www.example.com 域名连接。
+#2、xhttp+tls 客户端可使用 www.example.com 或 cdn.example.com 域名连接。
 JSON
   service $servername restart && purple "Xray配置完成！"
 }
