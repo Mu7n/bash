@@ -53,33 +53,6 @@ serverurl="${serversite}/${servertag}/${serverfile}"
 sslpath="/etc/letsencrypt/live"
 subscribepath="/etc/aio/subscribe"
 
-if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release; }; then
-  release="alpine"
-  MKservice="/etc/init.d/${servername}"
-  ENservice="rc-update add $servername"
-  nginxpid="/run/nginx/nginx.pid"
-  nginxconf="/etc/nginx/http.d/default.conf"
-  qrcmd="qr --ascii"
-  if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
-elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
-  release="debian"
-  MKservice="/etc/systemd/system/${servername}.service"
-  ENservice="systemctl enable $servername"
-  nginxpid="/run/nginx.pid"
-  nginxconf="/etc/nginx/sites-enabled/default"
-  qrcmd="qrencode -m 1 -t UTF8i"
-  if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
-elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
-  release="ubuntu"
-  MKservice="/etc/systemd/system/${servername}.service"
-  ENservice="systemctl enable $servername"
-  nginxpid="/run/nginx.pid"
-  nginxconf="/etc/nginx/sites-enabled/default"
-  qrcmd="qrencode -m 1 -t UTF8i"
-  if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
-fi
-if [ -z "$release" ]; then red "未知系统！"; exit 0; fi
-
 HTTP(){
   cat > /etc/nginx/nginx.conf << 'HTTP'
 pid #nginx.pid;
@@ -459,28 +432,9 @@ SSHD(){
   fi
 }
 
-SALTMD5(){
-  if [[ -f "${subscribepath}/subscribe" && -n "$(cat ${subscribepath}/subscribe)" ]]; then
-    serversalt="$(cat ${subscribepath}/subscribe)"
-  else
-    readp "请输入salt值：" serversalt
-    echo "$serversalt" > ${subscribepath}/subscribe
-  fi
-  rm -rf ${subscribepath}/x/*
-  rm -rf ${subscribepath}/m/*
-  serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
-  cat ${subscribepath}/mihomo >> ${subscribepath}/m/${serveruser}
-  serverbase="$(base64 -w 0 ${subscribepath}/xray)"
-  echo "$serverbase" > ${subscribepath}/x/${serveruser}
-  chmod -R 555 $subscribepath
-  subxlink="https://${serverdomain}/s/x/${serveruser}"
-  submlink="https://${serverdomain}/s/m/${serveruser}"
-  blue "\nXray\n"; purple "$subxlink\n"; $qrcmd "$subxlink"; blue "\nMihomo\n"; purple "$submlink\n"; $qrcmd "$submlink"
-}
-
 SUBSCRIBE(){
   xdomain="$(grep '"serverNames"' $serverjson | awk -F '"' '{print $4}')"
-  xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1{print $4}')"
+  xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1 {print $4}')"
   xpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
   xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
   #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
@@ -542,6 +496,22 @@ proxies:
     tti: 30
     password: $xuuid
 MSUB
+  if [[ -f "${subscribepath}/subscribe" && -n "$(cat ${subscribepath}/subscribe)" ]]; then
+    serversalt="$(cat ${subscribepath}/subscribe)"
+  else
+    readp "请输入salt值：" serversalt
+    echo "$serversalt" > ${subscribepath}/subscribe
+  fi
+  rm -rf ${subscribepath}/x/*
+  rm -rf ${subscribepath}/m/*
+  serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
+  serverbase="$(base64 -w 0 ${subscribepath}/xray)"
+  echo "$serverbase" > ${subscribepath}/x/${serveruser}
+  cat ${subscribepath}/mihomo > ${subscribepath}/m/${serveruser}
+  chmod -R 555 $subscribepath
+  subxlink="https://${serverdomain}/s/x/${serveruser}"
+  submlink="https://${serverdomain}/s/m/${serveruser}"
+  blue "\nXray\n"; purple "$subxlink\n"; $qrcmd "$subxlink"; blue "\nMihomo\n"; purple "$submlink\n"; $qrcmd "$submlink"
 }
 
 Nginx(){
@@ -571,19 +541,25 @@ Xray(){
     readp "请输入选项：" option
     case "$option" in
       1) DOWNLOAD; return;;
-      2) SUBSCRIBE; SALTMD5; return;;
+      2) SUBSCRIBE; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
   done
 }
 
-Menu(){
+MENU(){
   while true; do
     serverversion="$(xray version | awk 'NR==1 {print $2}')"
     serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
     xdomain="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
-    if [ -z "$xdomain" ]; then REALITY; DEST; elif [ "$serverdomain" != "$xdomain" ]; then sed -i "s/${xdomain}/${serverdomain}/g" $serverjson; service $servername restart; purple "配置已同步。"; fi
+    if [ "$serverdomain" != "$xdomain" ]; then
+      sed -i "s/${xdomain}/${serverdomain}/g" $serverjson
+      service $servername restart
+      purple "配置已同步。"
+    elif [ -z "$xdomain" ]; then
+      REALITY; DEST
+    fi
     purple ""
     blue "1、Xray"
     blue "2、Nginx"
@@ -599,16 +575,43 @@ Menu(){
   done
 }
 
-purple "\nMu"
-
-if [ ! -f "$serverjson" ]; then
-  if [  -f "$serverproc" ]; then
-    DOMAIN; REALITY; SUBSCRIBE; DEST; SALTMD5
-  else
-    DOMAIN; HTTP; DOWNLOAD; SERVICE; REALITY; CERT; SUBSCRIBE; DEST; SALTMD5; #SSHD
-  fi
+if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release; }; then
+  release="alpine"
+  MKservice="/etc/init.d/${servername}"
+  ENservice="rc-update add $servername"
+  nginxpid="/run/nginx/nginx.pid"
+  nginxconf="/etc/nginx/http.d/default.conf"
+  qrcmd="qr --ascii"
+  if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
+elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
+  release="debian"
+  MKservice="/etc/systemd/system/${servername}.service"
+  ENservice="systemctl enable $servername"
+  nginxpid="/run/nginx.pid"
+  nginxconf="/etc/nginx/sites-enabled/default"
+  qrcmd="qrencode -m 1 -t UTF8i"
+  if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
+elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
+  release="ubuntu"
+  MKservice="/etc/systemd/system/${servername}.service"
+  ENservice="systemctl enable $servername"
+  nginxpid="/run/nginx.pid"
+  nginxconf="/etc/nginx/sites-enabled/default"
+  qrcmd="qrencode -m 1 -t UTF8i"
+  if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
 fi
 
-Menu
+if [ ! -z "$release" ]; then
+  DOMAIN; HTTP; DOWNLOAD; SERVICE; REALITY; CERT; DEST; SUBSCRIBE
+else
+  red "未知系统！"
+  exit 0
+fi
+
+purple "\nMu"
+
+MENU
+
+SSHD
 
 purple "\nEnd!"
