@@ -321,7 +321,7 @@ REALITY
 
 SERVICE(){
   if [ ! -f "$serversystem" ]; then
-    if { [ "$release" == alpine ] && [ ! -f "$serversystem" ] }; then
+    if [ "$release" == alpine ]; then
       cat > $serversystem << INITD
 #!/sbin/openrc-run
 name="$servername"
@@ -352,7 +352,7 @@ start_pre() {
 }
 INITD
       chmod +x $serversystem; $serverenable; service $servername start
-    elif { [ "$release" == debian ] && [ ! -f "$serversystem" ] } || { [ "$release" == ubuntu ] && [ ! -f "$serversystem" ] }; then
+    elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then
       cat > $serversystem << SYSTEM
 [Unit]
 Description=$servername Service
