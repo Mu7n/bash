@@ -46,11 +46,11 @@ servername="xray"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
 serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
 serverpath="/etc/aio/${servername}"
-serverproc="${serverpath}/${servername}"
+serverprocess="${serverpath}/${servername}"
 serverjson="${serverpath}/${servername}.json"
 servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
 serverurl="${serversite}/${servertag}/${serverfile}"
-sslpath="/etc/letsencrypt/live"
+sslcertpath="/etc/letsencrypt/live"
 subscribepath="/etc/aio/subscribe"
 
 HTTP(){
@@ -160,6 +160,7 @@ DEST
 }
 
 REALITY(){
+  if [ ! -z "$serverdomain" ] || [ ! -z "$xdomain" ]; then DOMAIN; CERT; DEST; fi
   serveruuid="$(xray uuid)"
   serverx25519="$(xray x25519)"
   serverprivate="$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')"
@@ -319,9 +320,9 @@ REALITY
 }
 
 SERVICE(){
-  if [ "$release" == alpine ]; then
-    if [ ! -f "$MKservice" ]; then
-      cat > $MKservice << INITD
+  if [ ! -f "$serversystem" ]; then
+    if { [ "$release" == alpine ] && [ ! -f "$serversystem" ] }; then
+      cat > $serversystem << INITD
 #!/sbin/openrc-run
 name="$servername"
 description="$servername Service"
@@ -350,11 +351,9 @@ start_pre() {
   checkconfig || return 1
 }
 INITD
-      chmod +x $MKservice; $ENservice; service $servername start
-    fi
-  elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then
-    if [ ! -f "$MKservice" ]; then
-      cat > $MKservice << SYSTEM
+      chmod +x $serversystem; $serverenable; service $servername start
+    elif { [ "$release" == debian ] && [ ! -f "$serversystem" ] } || { [ "$release" == ubuntu ] && [ ! -f "$serversystem" ] }; then
+      cat > $serversystem << SYSTEM
 [Unit]
 Description=$servername Service
 After=network.target nss-lookup.target
@@ -369,9 +368,12 @@ RuntimeDirectoryMode=0755
 [Install]
 WantedBy=multi-user.target
 SYSTEM
-      chmod +x $MKservice; $ENservice; service $servername start
+      chmod +x $serversystem; $serverenable; service $servername start
+    elif [ -z "$release" ]; then
+      red "未知系统！"; exit 0
     fi
   fi
+  if [ ! -f "$serverprocess" ]; then DOWNLOAD; REALITY; fi
 }
 
 DOWNLOAD(){
@@ -387,9 +389,9 @@ DOWNLOAD(){
     done
     blue "$serverurl.dgst，正在下载。"
     curl -O -L -H 'Cache-Control: no-cache' $serverurl.dgst -#
-    zipsha="$(sha256sum $serverfile | awk '{printf $1}')"
-    dgstsha="$(awk -F '= ' '/256=/ {print $2}' $serverfile.dgst)"
-    if [ "$dgstsha" == "$zipsha" ]; then
+    serverzip="$(sha256sum $serverfile | awk '{printf $1}')"
+    serverdgst="$(awk -F '= ' '/256=/ {print $2}' $serverfile.dgst)"
+    if [ "$serverdgst" == "$serverzip" ]; then
       blue "check！"
       mkdir -p -m 644 $serverpath
       unzip -oj $serverfile -d $serverpath
@@ -399,7 +401,7 @@ DOWNLOAD(){
       break
     fi
   done
-  if [ -f "$MKservice" ]; then service $servername restart; fi
+  if [ -f "$serversystem" ]; then service $servername restart; fi
 }
 
 DOMAIN(){
@@ -409,7 +411,8 @@ DOMAIN(){
 }
 
 CERT(){
-  if [ ! -d "${sslpath}/${xdomain}" ]; then
+  if [ ! -d "${sslcertpath}/${serverdomain}" ] || [ ! -d "${sslcertpath}/${xdomain}" ]; then
+    HTTP
     blue "申请SSL证书。"
     rm -rf /etc/letsencrypt/{archive,live,renewal}
     echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
@@ -551,7 +554,7 @@ Xray(){
 MENU(){
   while true; do
     serverversion="$(xray version | awk 'NR==1 {print $2}')"
-    serverdomain="$(ls -l $sslpath | awk '/^d/ {print $NF}')"
+    serverdomain="$(ls -l $sslcertpath | awk '/^d/ {print $NF}')"
     xdomain="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
     if [ "$serverdomain" != "$xdomain" ]; then
       sed -i "s/${xdomain}/${serverdomain}/g" $serverjson
@@ -577,41 +580,34 @@ MENU(){
 
 if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release; }; then
   release="alpine"
-  MKservice="/etc/init.d/${servername}"
-  ENservice="rc-update add $servername"
+  serversystem="/etc/init.d/${servername}"
+  serverenable="rc-update add $servername"
   nginxpid="/run/nginx/nginx.pid"
   nginxconf="/etc/nginx/http.d/default.conf"
   qrcmd="qr --ascii"
   if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw; fi
 elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
   release="debian"
-  MKservice="/etc/systemd/system/${servername}.service"
-  ENservice="systemctl enable $servername"
+  serversystem="/etc/systemd/system/${servername}.service"
+  serverenable="systemctl enable $servername"
   nginxpid="/run/nginx.pid"
   nginxconf="/etc/nginx/sites-enabled/default"
   qrcmd="qrencode -m 1 -t UTF8i"
   if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
 elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
   release="ubuntu"
-  MKservice="/etc/systemd/system/${servername}.service"
-  ENservice="systemctl enable $servername"
+  serversystem="/etc/systemd/system/${servername}.service"
+  serverenable="systemctl enable $servername"
   nginxpid="/run/nginx.pid"
   nginxconf="/etc/nginx/sites-enabled/default"
   qrcmd="qrencode -m 1 -t UTF8i"
   if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
 fi
 
-if [ ! -z "$release" ]; then
-  DOMAIN; HTTP; DOWNLOAD; SERVICE; REALITY; CERT; DEST; SUBSCRIBE
-else
-  red "未知系统！"
-  exit 0
-fi
-
 purple "\nMu"
 
 MENU
-
+SERVICE
 SSHD
 
 purple "\nEnd!"
