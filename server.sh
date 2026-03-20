@@ -404,23 +404,27 @@ DOWNLOAD(){
 }
 
 DOMAIN(){
-  readp "请输入域名：" serverdomain
-  purple "域名：$serverdomain"
-  while true; do readp "请确认域名[yes/no]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac; done
+  if [[ -d "$sslcertpath" && -n "$(ls -l $sslcertpath | awk '/^d/ {print $NF}')" ]]; then
+    serverdomain="$(ls -l $sslcertpath | awk '/^d/ {print $NF}')"
+  else
+    readp "请输入域名：" serverdomain
+    purple "域名：$serverdomain"
+    while true; do readp "请确认域名[yes/no]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac; done
+  fi
 }
 
 CERT(){
   if [ -z "$serverdomain" ]; then DOMAIN; fi
-  if [ ! -d "${sslcertpath}/${serverdomain}" ]; then
+  if [ -d "${sslcertpath}/${serverdomain}" ]; then
+    blue "续签SSL证书。"
+    certbot renew --deploy-hook 'service nginx restart'
+  else
     HTTP
     blue "申请SSL证书。"
     rm -rf /etc/letsencrypt/{archive,live,renewal}
     echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
     echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconf
     service nginx restart && certbot --nginx --agree-tos -n -m ssl@cert.bot -d $serverdomain
-  else
-    blue "续签SSL证书。"
-    certbot renew --deploy-hook 'service nginx restart'
   fi
 }
 
