@@ -396,7 +396,7 @@ RuntimeDirectoryMode=0755
 [Install]
 WantedBy=multi-user.target
 SYSTEM
-      chmod 644 $MKservice; $ENservice; service $servername start
+      chmod +x $MKservice; $ENservice; service $servername start
     fi
   fi
 }
