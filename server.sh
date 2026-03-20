@@ -443,6 +443,7 @@ CERT(){
     echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconf
     service nginx restart && certbot --nginx --force-renewal --agree-tos -n -m ssl@cert.bot -d $serverdomain
   else
+    blue "续签SSL证书。"
     certbot renew --deploy-hook 'service nginx restart'
   fi
 }
