@@ -438,7 +438,7 @@ DOMAIN(){
 CERT(){
   if [ ! -d "${sslpath}/${servername}" ]; then
     blue "申请SSL证书。"
-    rm -rf $sslpath
+    rm -rf /etc/letsencrypt/{archive,live,renewal}
     echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
     echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconf
     service nginx restart && certbot --nginx --force-renewal --agree-tos -n -m ssl@cert.bot -d $serverdomain
