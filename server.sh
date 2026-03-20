@@ -117,8 +117,8 @@ server {
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   server_name cdn$serverdomain; #修改 CDN 域名
-  ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
-  ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
+  ssl_certificate ${sslcertpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
+  ssl_certificate_key ${sslcertpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
   location /${nginxpublic} { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
@@ -136,8 +136,8 @@ server {
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   server_name $serverdomain;
-  ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem;
-  ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem;
+  ssl_certificate ${sslcertpath}/${serverdomain}/fullchain.pem;
+  ssl_certificate_key ${sslcertpath}/${serverdomain}/privkey.pem;
   location /${nginxpublic} { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
