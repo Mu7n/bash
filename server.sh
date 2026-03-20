@@ -92,6 +92,7 @@ HTTP
 }
 
 DEST(){
+  if [ ! -n "$serverdomain" ] || [ ! -n "$xdomain" ]; then DOMAIN; CERT; fi
   nginxversion="$(nginx -v 2>&1)"
   nginxpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
   if [ "$(echo "$nginxversion" | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(echo "$nginxversion" | awk -F '.' '{print $3}')" -gt 0 ]; then
@@ -160,7 +161,7 @@ DEST
 }
 
 REALITY(){
-  if [ ! -z "$serverdomain" ] || [ ! -z "$xdomain" ]; then DOMAIN; CERT; DEST; fi
+  if [ ! -n "$serverdomain" ] || [ ! -n "$xdomain" ]; then DOMAIN; CERT; DEST; fi
   serveruuid="$(xray uuid)"
   serverx25519="$(xray x25519)"
   serverprivate="$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')"
