@@ -557,7 +557,7 @@ MENU(){
     serverversion="$(xray version | awk 'NR==1 {print $2}')"
     serverdomain="$(ls -l $sslcertpath | awk '/^d/ {print $NF}')"
     xdomain="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
-    if [ "$serverdomain" != "$xdomain" ]; then
+    if [ ! -z "$serverdomain" ] && [ ! -z "$xdomain" ] && [ "$serverdomain" != "$xdomain" ]; then
       sed -i "s/${xdomain}/${serverdomain}/g" $serverjson
       service $servername restart
       purple "配置已同步。"
