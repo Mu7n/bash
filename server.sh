@@ -34,7 +34,6 @@
 #if { [ -d "目录" ] && grep -qi "$str" /目录; } || { [ -f "文件" ] && grep -qi "$str" /目录; }; then 如果目录存在并检索到变量或者文件存在并检索到变量
 #set -ue(退出报错)；set -x(显示命令)
 
-
 set -u
 red(){  echo -e "\e[31m$1\e[0m";}
 blue(){  echo -e "\e[34m$1\e[0m";}
@@ -147,7 +146,7 @@ server {
   server_name cdn$serverdomain; #修改 CDN 域名
   ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
   ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
-  location ${nginxpublic} { #与 reality-xhttp 中 path 对应
+  location /${nginxpublic} { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -166,7 +165,7 @@ server {
   server_name $serverdomain;
   ssl_certificate ${sslpath}/${serverdomain}/fullchain.pem;
   ssl_certificate_key ${sslpath}/${serverdomain}/privkey.pem;
-  location ${nginxpublic} { #与 reality-xhttp 中 path 对应
+  location /${nginxpublic} { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -269,7 +268,7 @@ REALITY(){
         "xhttpSettings": {
           "host": "",  // 服务端不验证 host 客户端玩法更多
           "mode": "auto",  // 服务端设置 auto 客户端玩法更多
-          "path": "/${serverpublic}"
+          "path": "$serverpublic"
         }
       },
       "sniffing": {
@@ -472,6 +471,7 @@ SALTMD5(){
   cat ${subscribepath}/mihomo >> ${subscribepath}/m/${serveruser}
   serverbase="$(base64 -w 0 ${subscribepath}/xray)"
   echo "$serverbase" > ${subscribepath}/x/${serveruser}
+  chmod -R 555 $subscribepath
   subxlink="https://${serverdomain}/s/x/${serveruser}"
   submlink="https://${serverdomain}/s/m/${serveruser}"
   blue "\nXray\n"; purple "$subxlink\n"; $qrcmd "$subxlink"; blue "\nMihomo\n"; purple "$submlink\n"; $qrcmd "$submlink"
@@ -484,13 +484,12 @@ SUBSCRIBE(){
   xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
   #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   #xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
-  mkdir -p -m 555 $subscribepath
-  mkdir -p -m 555 $subscribepath/x
-  mkdir -p -m 555 $subscribepath/m
+  mkdir -p -m 555 ${subscribepath}/x
+  mkdir -p -m 555 ${subscribepath}/m
   cat > ${subscribepath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLS
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTP
-vless://${xuuid}@${xdomain}:10723?&type=kcp&headerType=utp&interval=30&seed=${xuuid}#XKCP
+vless://${xuuid}@${xdomain}:10723?&type=kcp&headerType=utp&mtu=100&tti=30&up=100&down=300&seed=${xuuid}&udp=xudp#XKCP
 
 XSUB
   cat > ${subscribepath}/mihomo << MSUB
@@ -523,7 +522,7 @@ proxies:
     reality-opts:
       public-key: $xpublic
       short-id: $xsid
-    xhttp-opts:
+    xhttp:
       path: $xuuid
       mode: auto
     udp: true
@@ -536,11 +535,11 @@ proxies:
     uuid: $xuuid
     network: kcp
     congestion-controller: bbr
-    up: "100"
-    down: "300"
-    hop-interval: 30
-    obfs: aes-128-gcm
-    obfs-password: $xuuid
+    up: 100
+    down: 300
+    mtu: 100
+    tti: 30
+    password: $xuuid
 MSUB
 }
 
