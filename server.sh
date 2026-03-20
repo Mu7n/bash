@@ -92,7 +92,7 @@ HTTP
 }
 
 DEST(){
-  if [ ! -n "$serverdomain" ] || [ ! -n "$xdomain" ]; then DOMAIN; CERT; fi
+  if [ ! -f "$serverjson" ]; then REALITY; fi
   nginxversion="$(nginx -v 2>&1)"
   nginxpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
   if [ "$(echo "$nginxversion" | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(echo "$nginxversion" | awk -F '.' '{print $3}')" -gt 0 ]; then
@@ -161,7 +161,7 @@ DEST
 }
 
 REALITY(){
-  if [ ! -n "$serverdomain" ] || [ ! -n "$xdomain" ]; then DOMAIN; CERT; DEST; fi
+  if [ ! -f "$serversystem" ]; then SERVICE; fi
   serveruuid="$(xray uuid)"
   serverx25519="$(xray x25519)"
   serverprivate="$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')"
@@ -321,6 +321,7 @@ REALITY
 }
 
 SERVICE(){
+  if [ ! -f "$serverprocess" ]; then DOWNLOAD; CERT; DEST; fi
   if [ ! -f "$serversystem" ]; then
     if [ "$release" == alpine ]; then
       cat > $serversystem << INITD
@@ -370,11 +371,8 @@ RuntimeDirectoryMode=0755
 WantedBy=multi-user.target
 SYSTEM
       chmod +x $serversystem; $serverenable; service $servername start
-    elif [ -z "$release" ]; then
-      red "未知系统！"; exit 0
     fi
   fi
-  if [ ! -f "$serverprocess" ]; then DOWNLOAD; REALITY; fi
 }
 
 DOWNLOAD(){
@@ -412,7 +410,8 @@ DOMAIN(){
 }
 
 CERT(){
-  if [ ! -d "${sslcertpath}/${serverdomain}" ] || [ ! -d "${sslcertpath}/${xdomain}" ]; then
+  if [ -z "$serverdomain" ]; then DOMAIN; fi
+  if [ ! -d "${sslcertpath}/${serverdomain}" ]; then
     HTTP
     blue "申请SSL证书。"
     rm -rf /etc/letsencrypt/{archive,live,renewal}
@@ -607,8 +606,9 @@ fi
 
 purple "\nMu"
 
-MENU
 SERVICE
+DOMAIN
+MENU
 SSHD
 
 purple "\nEnd!"
