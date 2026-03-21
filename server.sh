@@ -541,7 +541,7 @@ Nginx(){
 
 Xray(){
   while true; do
-    purple "\n检测到$serverversion版本。\n"
+    purple "\n检测到"$(xray version | awk 'NR==1 {print $2}')"版本。\n"
     blue "1、升级内核"
     blue "2、订阅链接"
     blue "3、退出"
