@@ -337,7 +337,7 @@ rc_ulimit="-u 10240 -n 102400"
 capabilities="^cap_net_bind_service,^cap_net_admin,^cap_net_raw"
 extra_commands="checkconfig"
 confdir=${confdir:-"$serverpath"}
-command="$serverproc"
+command="$serverprocess"
 command_args="run -confdir \$confdir"
 required_files="\$confdir"
 depend() {
@@ -360,7 +360,7 @@ INITD
 Description=$servername Service
 After=network.target nss-lookup.target
 [Service]
-ExecStart=$serverproc run -confdir $serverpath
+ExecStart=$serverprocess run -confdir $serverpath
 Restart=on-failure
 RestartPreventExitStatus=23
 LimitNPROC=10240
