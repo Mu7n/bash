@@ -41,18 +41,6 @@ purple(){  echo -e "\e[35m$1\e[0m";}
 cyan(){  echo -e "\e[36m$1\e[0m";}
 readp(){  read -p "$(cyan "$1")" $2;}
 
-case "$(uname -m)" in amd64 | x86_64) serverfile="Xray-linux-64.zip";; armv8 | aarch64) serverfile="Xray-linux-arm64-v8a.zip";; i386 | i686) serverfile="Xray-linux-32.zip";; *) red "未知架构！"; exit 0;; esac
-servername="xray"
-serversite="https://github.com/XTLS/Xray-core/releases/download"
-serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
-serverpath="/etc/aio/${servername}"
-serverprocess="${serverpath}/${servername}"
-serverjson="${serverpath}/${servername}.json"
-servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
-serverurl="${serversite}/${servertag}/${serverfile}"
-sslcertpath="/etc/letsencrypt/live"
-subscribepath="/etc/aio/subscribe"
-
 HTTP(){
   cat > /etc/nginx/nginx.conf << 'HTTP'
 pid #/nginx.pid;
@@ -118,8 +106,8 @@ server {
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   server_name cdn$serverdomain; #修改 CDN 域名
-  ssl_certificate ${sslcertpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
-  ssl_certificate_key ${sslcertpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
+  ssl_certificate ${servercertpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
+  ssl_certificate_key ${servercertpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
   location /${nginxpublic} { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
@@ -137,8 +125,8 @@ server {
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   server_name $serverdomain;
-  ssl_certificate ${sslcertpath}/${serverdomain}/fullchain.pem;
-  ssl_certificate_key ${sslcertpath}/${serverdomain}/privkey.pem;
+  ssl_certificate ${servercertpath}/${serverdomain}/fullchain.pem;
+  ssl_certificate_key ${servercertpath}/${serverdomain}/privkey.pem;
   location /${nginxpublic} { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
@@ -151,7 +139,7 @@ server {
   }
   location ~ ^/s/(x|m)/(.*) {
     default_type 'text/plain; charset=utf-8';
-    alias ${subscribepath}/\$1/\$2;
+    alias ${serversubpath}/\$1/\$2;
   }
 }
 #1、reality+vision 和 reality+xhttp 客户端仅使用 www.example.com 域名连接。
@@ -376,7 +364,7 @@ SYSTEM
 }
 
 DOWNLOAD(){
-  if [ ! -d "${sslcertpath}/${serverdomain}" ]; then CERT; fi
+  if [ ! -d "${servercertpath}/${serverdomain}" ]; then CERT; fi
   while true; do
     while true; do
       blue "$serverurl，正在下载。"
@@ -405,8 +393,8 @@ DOWNLOAD(){
 }
 
 DOMAIN(){
-  if [[ -d "$sslcertpath" && -n "$(ls -l $sslcertpath | awk '/^d/ {print $NF}')" ]]; then
-    serverdomain="$(ls -l $sslcertpath | awk '/^d/ {print $NF}')"
+  if [[ -d "$servercertpath" && -n "$(ls -l $servercertpath | awk '/^d/ {print $NF}')" ]]; then
+    serverdomain="$(ls -l $servercertpath | awk '/^d/ {print $NF}')"
   else
     readp "请输入域名：" serverdomain
     purple "域名：$serverdomain"
@@ -416,7 +404,7 @@ DOMAIN(){
 
 CERT(){
   if [ -z "$serverdomain" ]; then DOMAIN; fi
-  if [ -d "${sslcertpath}/${serverdomain}" ]; then
+  if [ -d "${servercertpath}/${serverdomain}" ]; then
     blue "续签SSL证书。"
     certbot renew --deploy-hook 'service nginx restart'
   else
@@ -447,15 +435,15 @@ SUBSCRIBE(){
   xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
   #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   #xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
-  mkdir -p -m 555 ${subscribepath}/x
-  mkdir -p -m 555 ${subscribepath}/m
-  cat > ${subscribepath}/xray << XSUB
+  mkdir -p -m 555 ${serversubpath}/x
+  mkdir -p -m 555 ${serversubpath}/m
+  cat > ${serversubpath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLS
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTP
 vless://${xuuid}@${xdomain}:10723?&type=kcp&headerType=utp&mtu=100&tti=30&up=100&down=300&seed=${xuuid}&udp=xudp#XKCP
 
 XSUB
-  cat > ${subscribepath}/mihomo << MSUB
+  cat > ${serversubpath}/mihomo << MSUB
 proxies:
   - name: "XTLS"
     type: vless
@@ -504,19 +492,19 @@ proxies:
     tti: 30
     password: $xuuid
 MSUB
-  if [[ -f "${subscribepath}/subscribe" && -n "$(cat ${subscribepath}/subscribe)" ]]; then
-    serversalt="$(cat ${subscribepath}/subscribe)"
+  if [[ -f "${serversubpath}/subscribe" && -n "$(cat ${serversubpath}/subscribe)" ]]; then
+    serversalt="$(cat ${serversubpath}/subscribe)"
   else
     readp "请输入salt值：" serversalt
-    echo "$serversalt" > ${subscribepath}/subscribe
+    echo "$serversalt" > ${serversubpath}/subscribe
   fi
-  rm -rf ${subscribepath}/x/*
-  rm -rf ${subscribepath}/m/*
+  rm -rf ${serversubpath}/x/*
+  rm -rf ${serversubpath}/m/*
   serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
-  serverbase="$(base64 -w 0 ${subscribepath}/xray)"
-  echo "$serverbase" > ${subscribepath}/x/${serveruser}
-  cat ${subscribepath}/mihomo > ${subscribepath}/m/${serveruser}
-  chmod -R 555 $subscribepath
+  serverbase="$(base64 -w 0 ${serversubpath}/xray)"
+  echo "$serverbase" > ${serversubpath}/x/${serveruser}
+  cat ${serversubpath}/mihomo > ${serversubpath}/m/${serveruser}
+  chmod -R 555 $serversubpath
   subxlink="https://${serverdomain}/s/x/${serveruser}"
   submlink="https://${serverdomain}/s/m/${serveruser}"
   blue "\nXray\n"; purple "$subxlink\n"; $qrcmd "$subxlink"; blue "\nMihomo\n"; purple "$submlink\n"; $qrcmd "$submlink"
@@ -598,6 +586,18 @@ elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os
   qrcmd="qrencode -m 1 -t UTF8i"
   if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then blue "开始安装。"; apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw; fi
 fi
+
+case "$(uname -m)" in amd64 | x86_64) serverfile="Xray-linux-64.zip";; armv8 | aarch64) serverfile="Xray-linux-arm64-v8a.zip";; i386 | i686) serverfile="Xray-linux-32.zip";; *) red "未知架构！"; exit 0;; esac
+servername="xray"
+serversite="https://github.com/XTLS/Xray-core/releases/download"
+serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
+serverpath="/etc/aio/${servername}"
+serverprocess="${serverpath}/${servername}"
+serverjson="${serverpath}/${servername}.json"
+servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
+serverurl="${serversite}/${servertag}/${serverfile}"
+servercertpath="/etc/letsencrypt/live"
+serversubpath="/etc/aio/subscribe"
 
 purple "\nMu"
 
