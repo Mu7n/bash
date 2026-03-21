@@ -321,7 +321,7 @@ REALITY
 }
 
 SERVICE(){
-  if [ ! -f "$serverprocess" ]; then DOWNLOAD; CERT; DEST; fi
+  if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
   if [ ! -f "$serversystem" ]; then
     if [ "$release" == alpine ]; then
       cat > $serversystem << INITD
@@ -376,6 +376,7 @@ SYSTEM
 }
 
 DOWNLOAD(){
+  if [ ! -d "${sslcertpath}/${serverdomain}" ]; then CERT; fi
   while true; do
     while true; do
       blue "$serverurl，正在下载。"
@@ -557,16 +558,6 @@ Xray(){
 
 MENU(){
   while true; do
-    serverversion="$(xray version | awk 'NR==1 {print $2}')"
-    serverdomain="$(ls -l $sslcertpath | awk '/^d/ {print $NF}')"
-    xdomain="$(grep "serverNames" $serverjson | awk -F '"' '{print $4}')"
-    if [ ! -z "$serverdomain" ] && [ ! -z "$xdomain" ] && [ "$serverdomain" != "$xdomain" ]; then
-      sed -i "s/${xdomain}/${serverdomain}/g" $serverjson
-      service $servername restart
-      purple "配置已同步。"
-    elif [ -z "$xdomain" ]; then
-      REALITY; DEST
-    fi
     purple ""
     blue "1、Xray"
     blue "2、Nginx"
@@ -610,8 +601,8 @@ fi
 
 purple "\nMu"
 
-SERVICE
 DOMAIN
+SERVICE
 MENU
 SSHD
 
