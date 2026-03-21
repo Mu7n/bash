@@ -81,7 +81,6 @@ HTTP
 
 DEST(){
   if [ ! -f "$serverjson" ]; then REALITY; fi
-  nginxversion="$(nginx -v 2>&1)"
   nginxpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
   if [ "$(echo "$nginxversion" | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(echo "$nginxversion" | awk -F '.' '{print $3}')" -gt 0 ]; then
     nginxhttp="ssl proxy_protocol;http2 on;"
@@ -139,7 +138,7 @@ server {
   }
   location ~ ^/s/(x|m)/(.*) {
     default_type 'text/plain; charset=utf-8';
-    alias ${serversubpath}/\$1/\$2;
+    alias ${nginxsub}/\$1/\$2;
   }
 }
 #1、reality+vision 和 reality+xhttp 客户端仅使用 www.example.com 域名连接。
@@ -435,15 +434,15 @@ SUBSCRIBE(){
   xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
   #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   #xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
-  mkdir -p -m 555 ${serversubpath}/x
-  mkdir -p -m 555 ${serversubpath}/m
-  cat > ${serversubpath}/xray << XSUB
+  mkdir -p -m 555 ${nginxsub}/x
+  mkdir -p -m 555 ${nginxsub}/m
+  cat > ${nginxsub}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLS
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTP
 vless://${xuuid}@${xdomain}:10723?&type=kcp&headerType=utp&mtu=100&tti=30&up=100&down=300&seed=${xuuid}&udp=xudp#XKCP
 
 XSUB
-  cat > ${serversubpath}/mihomo << MSUB
+  cat > ${nginxsub}/mihomo << MSUB
 proxies:
   - name: "XTLS"
     type: vless
@@ -492,19 +491,19 @@ proxies:
     tti: 30
     password: $xuuid
 MSUB
-  if [[ -f "${serversubpath}/subscribe" && -n "$(cat ${serversubpath}/subscribe)" ]]; then
-    serversalt="$(cat ${serversubpath}/subscribe)"
+  if [[ -f "${nginxsub}/subscribe" && -n "$(cat ${nginxsub}/subscribe)" ]]; then
+    serversalt="$(cat ${nginxsub}/subscribe)"
   else
     readp "请输入salt值：" serversalt
-    echo "$serversalt" > ${serversubpath}/subscribe
+    echo "$serversalt" > ${nginxsub}/subscribe
   fi
-  rm -rf ${serversubpath}/x/*
-  rm -rf ${serversubpath}/m/*
+  rm -rf ${nginxsub}/x/*
+  rm -rf ${nginxsub}/m/*
   serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
-  serverbase="$(base64 -w 0 ${serversubpath}/xray)"
-  echo "$serverbase" > ${serversubpath}/x/${serveruser}
-  cat ${serversubpath}/mihomo > ${serversubpath}/m/${serveruser}
-  chmod -R 555 $serversubpath
+  serverbase="$(base64 -w 0 ${nginxsub}/xray)"
+  echo "$serverbase" > ${nginxsub}/x/${serveruser}
+  cat ${nginxsub}/mihomo > ${nginxsub}/m/${serveruser}
+  chmod -R 555 $nginxsub
   subxlink="https://${serverdomain}/s/x/${serveruser}"
   submlink="https://${serverdomain}/s/m/${serveruser}"
   blue "\nXray\n"; purple "$subxlink\n"; $qrcmd "$subxlink"; blue "\nMihomo\n"; purple "$submlink\n"; $qrcmd "$submlink"
@@ -591,13 +590,14 @@ case "$(uname -m)" in amd64 | x86_64) serverfile="Xray-linux-64.zip";; armv8 | a
 servername="xray"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
 serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
+servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
+serverurl="${serversite}/${servertag}/${serverfile}"
 serverpath="/etc/aio/${servername}"
 serverprocess="${serverpath}/${servername}"
 serverjson="${serverpath}/${servername}.json"
-servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
-serverurl="${serversite}/${servertag}/${serverfile}"
-servercertpath="/etc/letsencrypt/live"
-serversubpath="/etc/aio/subscribe"
+nginxver="$(nginx -v 2>&1)"
+nginxsub="/etc/aio/subscribe"
+nginxcert="/etc/letsencrypt/live"
 
 purple "\nMu"
 
