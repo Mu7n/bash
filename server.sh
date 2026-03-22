@@ -82,7 +82,7 @@ HTTP
 DEST(){
   if [ ! -f "$serverjson" ]; then REALITY; fi
   nginxpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
-  if [ "$(echo "$nginxversion" | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(echo "$nginxversion" | awk -F '.' '{print $3}')" -gt 0 ]; then
+  if [ "$(echo "$nginxver" | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(echo "$nginxver" | awk -F '.' '{print $3}')" -gt 0 ]; then
     nginxhttp="ssl proxy_protocol;http2 on;"
   else
     nginxhttp="ssl http2 proxy_protocol;"
@@ -105,8 +105,8 @@ server {
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   server_name cdn$serverdomain; #修改 CDN 域名
-  ssl_certificate ${servercertpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
-  ssl_certificate_key ${servercertpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
+  ssl_certificate ${nginxcert}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
+  ssl_certificate_key ${nginxcert}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
   location /${nginxpublic} { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
@@ -124,8 +124,8 @@ server {
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   server_name $serverdomain;
-  ssl_certificate ${servercertpath}/${serverdomain}/fullchain.pem;
-  ssl_certificate_key ${servercertpath}/${serverdomain}/privkey.pem;
+  ssl_certificate ${nginxcert}/${serverdomain}/fullchain.pem;
+  ssl_certificate_key ${nginxcert}/${serverdomain}/privkey.pem;
   location /${nginxpublic} { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
@@ -363,7 +363,7 @@ SYSTEM
 }
 
 DOWNLOAD(){
-  if [ ! -d "${servercertpath}/${serverdomain}" ]; then CERT; fi
+  if [ ! -d "${nginxcert}/${serverdomain}" ]; then CERT; fi
   while true; do
     while true; do
       blue "$serverurl，正在下载。"
@@ -392,8 +392,8 @@ DOWNLOAD(){
 }
 
 DOMAIN(){
-  if [[ -d "$servercertpath" && -n "$(ls -l $servercertpath | awk '/^d/ {print $NF}')" ]]; then
-    serverdomain="$(ls -l $servercertpath | awk '/^d/ {print $NF}')"
+  if [[ -d "$nginxcert" && -n "$(ls -l $nginxcert | awk '/^d/ {print $NF}')" ]]; then
+    serverdomain="$(ls -l $nginxcert | awk '/^d/ {print $NF}')"
   else
     readp "请输入域名：" serverdomain
     purple "域名：$serverdomain"
@@ -403,7 +403,7 @@ DOMAIN(){
 
 CERT(){
   if [ -z "$serverdomain" ]; then DOMAIN; fi
-  if [ -d "${servercertpath}/${serverdomain}" ]; then
+  if [ -d "${nginxcert}/${serverdomain}" ]; then
     blue "续签SSL证书。"
     certbot renew --deploy-hook 'service nginx restart'
   else
