@@ -142,6 +142,7 @@ DEST
 
 REALITY(){
   if [ ! -f "$serversystem" ]; then SERVICE; fi
+  serversid="$(RANDOMSID)"
   serveruuid="$(xray uuid)"
   serverx25519="$(xray x25519)"
   serverprivate="$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')"
@@ -195,7 +196,7 @@ REALITY(){
           "xver": 1,
           "serverNames": ["$serverdomain"],
           "privateKey": "$serverprivate",
-          "shortIds": ["1a2b3c4d5e6f"]
+          "shortIds": ["$serversid"]
         }
       },
       "sniffing": {
@@ -414,6 +415,16 @@ DOMAIN(){
     purple "域名：$serverdomain"
     while true; do readp "请确认域名[yes/no]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac done
   fi
+}
+
+RANDOMSID(){
+  local chars="1a2b3c4d5e6f"
+  local shortid=""
+  while [ "${#shortid}" -lt "8" ]; do
+    randomid="${chars:$(($RANDOM%${#chars})):1}"
+    shortid="$shortid$randomid"
+  done
+  echo "$shortid"
 }
 
 SUBSCRIBE(){
