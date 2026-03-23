@@ -142,11 +142,8 @@ DEST
 
 REALITY(){
   if [ ! -f "$serversystem" ]; then SERVICE; fi
-  serversid="$(RANDOMSID)"
   serveruuid="$(xray uuid)"
   serverx25519="$(xray x25519)"
-  serverprivate="$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')"
-  serverpublic="$(echo "$serverx25519" | grep "Password" | awk '{print $2}')"
   cat > $serverjson << REALITY
 {
   "log": {
@@ -195,8 +192,8 @@ REALITY(){
           "target": 44380,  //转发 Nginx 监听进程
           "xver": 1,
           "serverNames": ["$serverdomain"],
-          "privateKey": "$serverprivate",
-          "shortIds": ["$serversid"]
+          "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')",
+          "shortIds": ["$(RANDOMSID)"]
         }
       },
       "sniffing": {
@@ -224,7 +221,7 @@ REALITY(){
         "xhttpSettings": {
           "host": "",  // 服务端不验证 host 客户端玩法更多
           "mode": "auto",  // 服务端设置 auto 客户端玩法更多
-          "path": "$serverpublic"
+          "path": "$(echo "$serverx25519" | grep "Password" | awk '{print $2}')"
         }
       },
       "sniffing": {
