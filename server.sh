@@ -79,7 +79,7 @@ HTTP
 }
 
 DEST(){
-  if [ ! -f "$serverjson" ]; then REALITY; fi
+  if [ ! -f "$serverconfig" ]; then REALITY; fi
   cat > $nginxconf << DEST
 server {
   listen 80;
@@ -100,7 +100,7 @@ server {
   server_name cdn$serverdomain; #修改 CDN 域名
   ssl_certificate ${nginxcertpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
   ssl_certificate_key ${nginxcertpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
-  location /$(grep '"path"' $serverjson | awk -F '"' '{print $4}') { #与 reality-xhttp 中 path 对应
+  location /$(grep '"path"' $serverconfig | awk -F '"' '{print $4}') { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -119,7 +119,7 @@ server {
   server_name $serverdomain;
   ssl_certificate ${nginxcertpath}/${serverdomain}/fullchain.pem;
   ssl_certificate_key ${nginxcertpath}/${serverdomain}/privkey.pem;
-  location /$(grep '"path"' $serverjson | awk -F '"' '{print $4}') { #与 reality-xhttp 中 path 对应
+  location /$(grep '"path"' $serverconfig | awk -F '"' '{print $4}') { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -144,7 +144,7 @@ REALITY(){
   if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
   serveruuid="$(xray uuid)"
   serverx25519="$(xray x25519)"
-  cat > $serverjson << REALITY
+  cat > $serverconfig << REALITY
 {
   "log": {
     "loglevel": "warning",
@@ -300,7 +300,7 @@ REALITY
 
 RCINITD(){
   if [ ! -f "$serverprocess" ]; then REALITY; fi
-  if [ ! -f "$serverjson" ]; then REALITY; fi
+  if [ ! -f "$serverconfig" ]; then REALITY; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << RCINITD
 #!/sbin/openrc-run
@@ -337,7 +337,7 @@ RCINITD
 
 SYSTEMD(){
   if [ ! -f "$serverprocess" ]; then REALITY; fi
-  if [ ! -f "$serverjson" ]; then REALITY; fi
+  if [ ! -f "$serverconfig" ]; then REALITY; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << SYSTEMD
 [Unit]
@@ -359,7 +359,7 @@ SYSTEMD
 }
 
 DOWNLOAD(){
-  if [[ -z "$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')" || -z "$(grep '"serverNames"' $serverjson 2>&1 | awk -F '"' '{print $4}')" ]]; then DOMAIN; CERT; fi
+  if [[ -z "$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')" || -z "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" ]]; then DOMAIN; CERT; fi
   while true; do
     while true; do
       blue "$serverurl，正在下载。"
@@ -422,10 +422,10 @@ RANDOMSID(){
 }
 
 SUBSCRIBE(){
-  xdomain="$(grep '"serverNames"' $serverjson | awk -F '"' '{print $4}')"
-  xuuid="$(grep '"id"' $serverjson | awk -F '"' 'NR==1 {print $4}')"
-  xpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
-  xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
+  xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
+  xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
+  xpublic="$(grep '"path"' $serverconfig | awk -F '"' '{print $4}')"
+  xsid="$(grep '"shortIds"' $serverconfig | awk -F '"' '{print $4}')"
   #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   #xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   mkdir -p -m 555 ${nginxsubpath}/xlink
@@ -621,7 +621,7 @@ servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}'
 serverurl="${serversite}/${servertag}/${serverfile}"
 serverpath="/etc/aio/${servername}"
 serverprocess="${serverpath}/${servername}"
-serverjson="${serverpath}/${servername}.json"
+serverconfig="${serverpath}/${servername}.json"
 nginxversion="$(nginx -v 2>&1)"
 nginxsubpath="/etc/aio/subscribe"
 nginxcertpath="/etc/letsencrypt/live"
