@@ -330,7 +330,7 @@ start_pre() {
   checkconfig || return 1
 }
 RCINITD
-    chmod +x $serversystem; $serverenable
+    chmod +x $serversystem && $serverenable && service $servername start
   fi
 }
 
@@ -352,7 +352,7 @@ RuntimeDirectoryMode=0755
 [Install]
 WantedBy=multi-user.target
 SYSTEMD
-    chmod +x $serversystem; $serverenable
+    chmod +x $serversystem && $serverenable && service $servername start
   fi
 }
 
@@ -382,10 +382,10 @@ DOWNLOAD(){
       rm -rf $serverfile
       rm -rf $serverfile.dgst
       ln -sf ${serverpath}/${servername} /usr/local/bin
-      if [ -f "$serversystem" ]; then service $servername restart; fi
       break
     fi
   done
+  if [ -f "$serversystem" ]; then service $servername restart; fi
 }
 
 CERT(){
