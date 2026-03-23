@@ -129,7 +129,7 @@ server {
     add_header Alt-Svc 'h3=":443"; ma=86400'; #通告 HTTP/3 server 的可用性
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
   }
-  location ~ ^/sapi/(xlink|mlink)/(.*) {
+  location ~ ^/surl/(xlink|mlink)/(.*) {
     default_type 'text/plain; charset=utf-8';
     alias ${nginxsubpath}/\$1/\$2;
   }
