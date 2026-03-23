@@ -367,7 +367,9 @@ DOWNLOAD(){
       if unzip -t $serverfile; then
         break
       else
-        sleep 15 && servertag="" && servertag="$(curl -sf $serverapi | grep '"tag_name"' | awk -F '"' '{print $4}')" && serverurl="${serversite}/${servertag}/${serverfile}"
+        sleep 15
+        servertag=""
+        servertag="$(curl -sf $serverapi | grep '"tag_name"' | awk -F '"' '{print $4}')" && serverurl="${serversite}/${servertag}/${serverfile}"
       fi
     done
     blue "$serverurl.dgst，正在下载。"
