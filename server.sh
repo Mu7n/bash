@@ -382,13 +382,13 @@ DOWNLOAD(){
       blue "check！"
       mkdir -p -m 644 $serverpath
       unzip -oj $serverfile -d $serverpath
-      ln -sf ${serverpath}/${servername} /usr/local/bin
       rm -rf $serverfile
       rm -rf $serverfile.dgst
+      ln -sf ${serverpath}/${servername} /usr/local/bin
+      if [ -f "$serversystem" ]; thenservice $servername restart; fi
       break
     fi
   done
-  if [ -f "$serversystem" ]; then service $servername restart; fi
 }
 
 CERT(){
