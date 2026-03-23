@@ -357,7 +357,7 @@ SYSTEMD
 }
 
 DOWNLOAD(){
-  if [ ! -d "$nginxcertpath" ]; then CERT; fi
+  if [[ ! -d "$nginxcertpath" || -z "$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')" ]]; then DOMAIN; CERT; fi
   while true; do
     while true; do
       blue "$serverurl，正在下载。"
@@ -389,7 +389,6 @@ DOWNLOAD(){
 }
 
 CERT(){
-  if [[ -z "$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')" ]]; then DOMAIN; fi
   if [ -d "${nginxcertpath}/${serverdomain}" ]; then
     HTTP
     blue "续签SSL证书。"
@@ -405,12 +404,9 @@ CERT(){
 }
 
 DOMAIN(){
-  serverdomain="$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')"
-  if [ -z "$serverdomain" ]; then
-    readp "请输入域名：" serverdomain
-    purple "域名：$serverdomain"
-    while true; do readp "请确认域名[yes/no]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac done
-  fi
+  readp "请输入域名：" serverdomain
+  purple "域名：$serverdomain"
+  while true; do readp "请确认域名[yes/no]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac done
 }
 
 RANDOMSID(){
