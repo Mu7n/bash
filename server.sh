@@ -360,7 +360,7 @@ SYSTEMD
 }
 
 DOWNLOAD(){
-  if [ ! -d "${nginxcertpath}/${serverdomain}" ]; then CERT; fi
+  if [ ! -d "$nginxcertpath" ]; then CERT; fi
   while true; do
     while true; do
       blue "$serverurl，正在下载。"
