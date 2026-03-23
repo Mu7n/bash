@@ -42,7 +42,7 @@ cyan(){  echo -e "\e[36m$1\e[0m";}
 readp(){  read -p "$(cyan "$1")" $2;}
 
 HTTP(){
-  if [ ! -d /etc/nginx/Mu ]; then
+  if [ ! -d /etc/nginx/html ]; then
     cat > /etc/nginx/nginx.conf << 'HTTP'
 pid #/nginx.pid;
 worker_processes auto;
@@ -80,7 +80,6 @@ HTTP
 
 DEST(){
   if [ ! -f "$serverjson" ]; then REALITY; fi
-  nginxpublic="$(grep '"path"' $serverjson | awk -F '"' '{print $4}')"
   if [ "$(echo "$nginxversion" | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(echo "$nginxversion" | awk -F '.' '{print $3}')" -gt 0 ]; then
     nginxhttp="ssl proxy_protocol;http2 on;"
   else
@@ -106,7 +105,7 @@ server {
   server_name cdn$serverdomain; #修改 CDN 域名
   ssl_certificate ${nginxcertpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
   ssl_certificate_key ${nginxcertpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
-  location /${nginxpublic} { #与 reality-xhttp 中 path 对应
+  location /$(grep '"path"' $serverjson | awk -F '"' '{print $4}') { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -125,7 +124,7 @@ server {
   server_name $serverdomain;
   ssl_certificate ${nginxcertpath}/${serverdomain}/fullchain.pem;
   ssl_certificate_key ${nginxcertpath}/${serverdomain}/privkey.pem;
-  location /${nginxpublic} { #与 reality-xhttp 中 path 对应
+  location /$(grep '"path"' $serverjson | awk -F '"' '{print $4}') { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
