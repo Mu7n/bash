@@ -389,7 +389,7 @@ DOWNLOAD(){
 }
 
 CERT(){
-  if [[ -z "$(ls -l $nginxcertpath | awk '/^d/ {print $NF}')" ]]; then DOMAIN; fi
+  if [[ -z "$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')" ]]; then DOMAIN; fi
   if [ -d "${nginxcertpath}/${serverdomain}" ]; then
     HTTP
     blue "续签SSL证书。"
@@ -405,9 +405,7 @@ CERT(){
 }
 
 DOMAIN(){
-  if [[ -d "$nginxcertpath" && -n "$(ls -l $nginxcertpath | awk '/^d/ {print $NF}')" ]]; then
-    serverdomain="$(ls -l $nginxcertpath | awk '/^d/ {print $NF}')"
-  else
+  if [ -z "$serverdomain" ]; then
     readp "请输入域名：" serverdomain
     purple "域名：$serverdomain"
     while true; do readp "请确认域名[yes/no]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac done
