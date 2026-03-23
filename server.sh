@@ -106,7 +106,7 @@ server {
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
   }
   location / {
-    root /etc/nginx/Mu;
+    root /etc/nginx/HTML;
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
   }
 }
@@ -125,11 +125,11 @@ server {
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
   }
   location / {
-    root /etc/nginx/Mu;
+    root /etc/nginx/HTML;
     add_header Alt-Svc 'h3=":443"; ma=86400'; #通告 HTTP/3 server 的可用性
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
   }
-  location ~ ^/s/(x|m)/(.*) {
+  location ~ ^/sapi/(xlink|mlink)/(.*) {
     default_type 'text/plain; charset=utf-8';
     alias ${nginxsubpath}/\$1/\$2;
   }
@@ -403,7 +403,7 @@ CERT(){
     rm -rf /etc/letsencrypt/{archive,live,renewal}
     echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
     echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconf
-    service nginx restart && certbot --nginx --agree-tos -n -m ssl@cert.bot -d $serverdomain
+    service nginx stop && certbot --nginx --agree-tos -n -m ssl@cert.bot -d $serverdomain
   fi
 }
 
@@ -434,8 +434,8 @@ SUBSCRIBE(){
   xsid="$(grep '"shortIds"' $serverjson | awk -F '"' '{print $4}')"
   #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   #xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
-  mkdir -p -m 555 ${nginxsubpath}/x
-  mkdir -p -m 555 ${nginxsubpath}/m
+  mkdir -p -m 555 ${nginxsubpath}/xlink
+  mkdir -p -m 555 ${nginxsubpath}/mlink
   cat > ${nginxsubpath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLS
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTP
@@ -491,21 +491,21 @@ proxies:
     tti: 30
     password: $xuuid
 MSUB
-  if [[ -f "${nginxsubpath}/subapi" && -n "$(cat ${nginxsubpath}/subapi)" ]]; then
-    serversalt="$(cat ${nginxsubpath}/subapi)"
+  if [[ -f "${nginxsubpath}/subscribe" && -n "$(cat ${nginxsubpath}/subscribe)" ]]; then
+    serversalt="$(cat ${nginxsubpath}/subscribe)"
   else
     readp "请输入salt值：" serversalt
-    echo "$serversalt" > ${nginxsubpath}/subapi
+    echo "$serversalt" > ${nginxsubpath}/subscribe
   fi
-  rm -rf ${nginxsubpath}/x/*
-  rm -rf ${nginxsubpath}/m/*
+  rm -rf ${nginxsubpath}/xlink/*
+  rm -rf ${nginxsubpath}/mlink/*
   serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
   serverbase="$(base64 -w 0 ${nginxsubpath}/xray)"
-  echo "$serverbase" > ${nginxsubpath}/x/${serveruser}
-  cat ${nginxsubpath}/mihomo > ${nginxsubpath}/m/${serveruser}
+  echo "$serverbase" > ${nginxsubpath}/xlink/${serveruser}
+  cat ${nginxsubpath}/mihomo > ${nginxsubpath}/mlink/${serveruser}
   chmod -R 555 $nginxsubpath
-  subxlink="https://${serverdomain}/s/x/${serveruser}"
-  submlink="https://${serverdomain}/s/m/${serveruser}"
+  subxlink="https://${serverdomain}/surl/xlink/${serveruser}"
+  submlink="https://${serverdomain}/surl/mlink/${serveruser}"
   blue "\nXray\n"; purple "$subxlink\n"; $qrcmd "$subxlink"; blue "\nMihomo\n"; purple "$submlink\n"; $qrcmd "$submlink"
 }
 
