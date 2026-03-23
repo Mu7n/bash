@@ -389,7 +389,7 @@ DOWNLOAD(){
 }
 
 CERT(){
-  if [ -z "$serverdomain" ]; then DOMAIN; fi
+  if [ -z "$(DOMAIN)" ]; then DOMAIN; fi
   if [ -d "${nginxcertpath}/${serverdomain}" ]; then
     HTTP
     blue "续签SSL证书。"
