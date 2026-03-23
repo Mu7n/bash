@@ -299,6 +299,7 @@ REALITY
 }
 
 RCINITD(){
+  if [ ! -f "$serverprocess" ]; then REALITY; fi
   if [ ! -f "$serverjson" ]; then REALITY; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << RCINITD
@@ -335,6 +336,7 @@ RCINITD
 }
 
 SYSTEMD(){
+  if [ ! -f "$serverprocess" ]; then REALITY; fi
   if [ ! -f "$serverjson" ]; then REALITY; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << SYSTEMD
@@ -357,7 +359,7 @@ SYSTEMD
 }
 
 DOWNLOAD(){
-  if [[ ! -d "$nginxcertpath" || -z "$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')" ]]; then DOMAIN; CERT; fi
+  if [[ -z "$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')" || -z "$(grep '"serverNames"' $serverjson 2>&1 | awk -F '"' '{print $4}')" ]]; then DOMAIN; CERT; fi
   while true; do
     while true; do
       blue "$serverurl，正在下载。"
