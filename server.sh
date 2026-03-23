@@ -405,6 +405,7 @@ CERT(){
 }
 
 DOMAIN(){
+  serverdomain="$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')"
   if [ -z "$serverdomain" ]; then
     readp "请输入域名：" serverdomain
     purple "域名：$serverdomain"
