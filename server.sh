@@ -389,20 +389,18 @@ DOWNLOAD(){
 }
 
 CERT(){
-  if [ -z "$(DOMAIN)" ]; then
-    DOMAIN
-    if [ -d "${nginxcertpath}/${serverdomain}" ]; then
-      HTTP
-      blue "续签SSL证书。"
-      certbot renew --deploy-hook 'service nginx restart'
-    else
-      HTTP
-      blue "申请SSL证书。"
-      rm -rf /etc/letsencrypt/{archive,live,renewal}
-      echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
-      echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconf
-      service nginx stop && certbot --nginx --agree-tos -n -m ssl@cert.bot -d $serverdomain
-    fi
+  if [[ -d "$nginxcertpath" && -n "$(ls -l $nginxcertpath | awk '/^d/ {print $NF}')" ]]; then DOMAIN; fi
+  if [ -d "${nginxcertpath}/${serverdomain}" ]; then
+    HTTP
+    blue "续签SSL证书。"
+    certbot renew --deploy-hook 'service nginx restart'
+  else
+    HTTP
+    blue "申请SSL证书。"
+    rm -rf /etc/letsencrypt/{archive,live,renewal}
+    echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
+    echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconf
+    service nginx stop && certbot --nginx --agree-tos -n -m ssl@cert.bot -d $serverdomain
   fi
 }
 
