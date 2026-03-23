@@ -141,7 +141,7 @@ DEST
 }
 
 REALITY(){
-  if [ ! -f "$serversystem" ]; then SERVICE; fi
+  if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
   serveruuid="$(xray uuid)"
   serverx25519="$(xray x25519)"
   cat > $serverjson << REALITY
@@ -299,7 +299,7 @@ REALITY
 }
 
 RCINITD(){
-  if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
+  if [ ! -f "$serverjson" ]; then REALITY; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << RCINITD
 #!/sbin/openrc-run
@@ -330,12 +330,12 @@ start_pre() {
   checkconfig || return 1
 }
 RCINITD
-    chmod +x $serversystem; $serverenable; service $servername start
+    chmod +x $serversystem; $serverenable
   fi
 }
 
 SYSTEMD(){
-  if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
+  if [ ! -f "$serverjson" ]; then REALITY; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << SYSTEMD
 [Unit]
@@ -352,7 +352,7 @@ RuntimeDirectoryMode=0755
 [Install]
 WantedBy=multi-user.target
 SYSTEMD
-    chmod +x $serversystem; $serverenable; service $servername start
+    chmod +x $serversystem; $serverenable
   fi
 }
 
@@ -606,6 +606,7 @@ CHECK(){
   else
     nginxhttp="ssl http2 proxy_protocol;"
   fi
+  DEST
 }
 
 case "$(uname -m)" in
@@ -630,7 +631,6 @@ nginxcertpath="/etc/letsencrypt/live"
 purple "\nMu"
 
 CHECK
-DOMAIN
 MENU
 SSHD
 
