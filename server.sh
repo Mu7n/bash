@@ -80,6 +80,7 @@ HTTP
 
 DEST(){
   if [ ! -f "$serverconfig" ]; then REALITY; fi
+  if [ -z "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" ]; then DOMAIN; CERT; fi
   cat > $nginxconfig << DEST
 server {
   listen 80;
@@ -142,6 +143,7 @@ DEST
 
 REALITY(){
   if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
+  if [ -z "$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')" ]; then DOMAIN; CERT; fi
   serveruuid="$(xray uuid)"
   serverx25519="$(xray x25519)"
   cat > $serverconfig << REALITY
@@ -359,7 +361,6 @@ SYSTEMD
 }
 
 DOWNLOAD(){
-  if [[ -z "$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')" || -z "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" ]]; then DOMAIN; CERT; fi
   while true; do
     while true; do
       blue "$serverurl，正在下载。"
