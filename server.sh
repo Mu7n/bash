@@ -385,7 +385,7 @@ DOWNLOAD(){
       rm -rf $serverfile
       rm -rf $serverfile.dgst
       ln -sf ${serverpath}/${servername} /usr/local/bin
-      if [ -f "$serversystem" ]; thenservice $servername restart; fi
+      if [ -f "$serversystem" ]; then service $servername restart; fi
       break
     fi
   done
