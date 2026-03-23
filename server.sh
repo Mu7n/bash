@@ -601,7 +601,7 @@ CHECK(){
     serversystem="/etc/systemd/system/${servername}.service"
     serverenable="systemctl enable $servername"
     nginxpid="/run/nginx.pid"
-    nginxconf="/etc/nginx/sites-enabled/default"
+    nginxconf="/etc/nginx/sites-available/default"
     qrcmd="qrencode -m 1 -t UTF8i"
     SYSTEMD
   fi
