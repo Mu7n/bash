@@ -437,14 +437,14 @@ SUBSCRIBE(){
   mkdir -p -m 555 ${nginxsubpath}/xlink
   mkdir -p -m 555 ${nginxsubpath}/mlink
   cat > ${nginxsubpath}/xray << XSUB
-vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLS
-vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTP
-vless://${xuuid}@${xdomain}:10723?&type=kcp&headerType=utp&mtu=100&tti=30&up=100&down=300&seed=${xuuid}&udp=xudp#XKCP
+vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLSFLO
+vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTPFLO
+vless://${xuuid}@${xdomain}:10723?&type=kcp&headerType=utp&mtu=100&tti=30&up=100&down=300&seed=${xuuid}&udp=xudp#XKCPFLO
 
 XSUB
   cat > ${nginxsubpath}/mihomo << MSUB
 proxies:
-  - name: "XTLS"
+  - name: "XTLSFLO"
     type: vless
     server: $xdomain
     port: 443
@@ -460,7 +460,7 @@ proxies:
     udp: true
     packet-encoding: xudp
     client-fingerprint: chrome
-  - name: "XHTTP"
+  - name: "XHTTPFLO"
     type: vless
     server: $xdomain
     port: 443
@@ -472,13 +472,13 @@ proxies:
     reality-opts:
       public-key: $xpublic
       short-id: $xsid
-    xhttp:
-      path: $xuuid
-      mode: auto
+    xhttp-opts:
+      _path: $xuuid
+      _mode: auto
     udp: true
     packet-encoding: xudp
     client-fingerprint: chrome
-  - name: "XKCP"
+  - name: "XKCPFLO"
     type: vless
     server: $xdomain
     port: 10723
