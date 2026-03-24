@@ -79,7 +79,7 @@ HTTP
 }
 
 DEST(){
-  if [[ -z "$serverdomain" && -z "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" ]]; then REALITY; fi
+  if [[ -z "$serverdomain" || -z "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" ]]; then REALITY; fi
   if [ "$(nginx -v 2>&1 | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(nginx -v 2>&1 | awk -F '.' '{print $3}')" -gt 0 ]; then
     nginxhttp="ssl proxy_protocol;http2 on;"
   else
@@ -146,7 +146,7 @@ DEST
 }
 
 REALITY(){
-  if [ -z "$serverdomain" ]; then DOMAIN; CERT; fi
+  if [ ! -n "$serverdomain" ]; then DOMAIN; CERT; fi
   if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
@@ -305,7 +305,7 @@ REALITY
 }
 
 RCINITD(){
-  if [ ! -f "$serverprocess" ] && [ -z "$(cat $serverconfig)" ]; then REALITY; DEST; fi
+  if [[ ! -f "$serverprocess" || ! -n "$(cat $serverconfig)" ]]; then REALITY; DEST; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << RCINITD
 #!/sbin/openrc-run
@@ -341,7 +341,7 @@ RCINITD
 }
 
 SYSTEMD(){
-  if [ ! -f "$serverprocess" ] && [ -z "$(cat $serverconfig)" ]; then REALITY; DEST; fi
+  if [[ ! -f "$serverprocess" || ! -n "$(cat $serverconfig)" ]]; then REALITY; DEST; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << SYSTEMD
 [Unit]
