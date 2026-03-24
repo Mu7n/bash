@@ -435,10 +435,9 @@ SUBSCRIBE(){
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/xray << XSUB
-vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLSFLO
-vless://${xuuid}@${xdomain}:443?obfs=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTPFLO
-vless://${xuuid}@${xdomain}:10723?&obfs=kcp&obfsparam={\"header\":\"utp\",\"congestion\":true,\"mtu\":\"100\",\"tti\":\"30\",\"uplinkCapacity\":\"100\",\"downlinkCapacity\":\"200\",\"seed\":\"${xuuid}\"}#XKCPFLO
-
+vless://$(base64 -w 0 "${xuuid}@${xdomain}:443")?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLSFLO
+vless://$(base64 -w 0 "${xuuid}@${xdomain}:443")?obfs=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTPFLO
+vless://$(base64 -w 0 "${xuuid}@${xdomain}:10723")?&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22mtu%22:%22100%22,%22congestion%22:%22true%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D&udp=3#XKCPFLO
 XSUB
   cat > ${serversubpath}/mihomo << MSUB
 proxies:
@@ -486,8 +485,7 @@ MSUB
   rm -rf ${serversubpath}/xlink/*
   rm -rf ${serversubpath}/mlink/*
   serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
-  serverbase="$(base64 -w 0 ${serversubpath}/xray)"
-  echo "$serverbase" > ${serversubpath}/xlink/${serveruser}
+  cat ${serversubpath}/xray > ${serversubpath}/xlink/${serveruser}
   cat ${serversubpath}/mihomo > ${serversubpath}/mlink/${serveruser}
   chmod -R 555 $serversubpath
   subxlink="https://${serverdomain}/surl/xlink/${serveruser}"
