@@ -42,7 +42,7 @@ cyan(){  echo -e "\e[36m$1\e[0m";}
 readp(){  read -p "$(cyan "$1")" $2;}
 
 HTTP(){
-  if [ ! -d /etc/nginx/HTML ]; then
+  if [ ! -d "/etc/nginx/HTML" ]; then
     cat > /etc/nginx/nginx.conf << 'HTTP'
 pid #/nginx.pid;
 worker_processes auto;
@@ -79,11 +79,7 @@ HTTP
 }
 
 DEST(){
-  if [[ -f "$serverconfig" && -n "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" ]]; then
-    serverdomain="$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')"
-  else
-    REALITY
-  fi
+  if [[ -z "$serverdomain" && -z "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" ]]; then REALITY; fi
   if [ "$(nginx -v 2>&1 | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(nginx -v 2>&1 | awk -F '.' '{print $3}')" -gt 0 ]; then
     nginxhttp="ssl proxy_protocol;http2 on;"
   else
@@ -107,8 +103,8 @@ server {
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   server_name cdn$serverdomain; #修改 CDN 域名
-  ssl_certificate ${nginxcertpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
-  ssl_certificate_key ${nginxcertpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
+  ssl_certificate ${servercertpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
+  ssl_certificate_key ${servercertpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
   location /$(grep '"path"' $serverconfig | awk -F '"' '{print $4}') { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
@@ -126,8 +122,8 @@ server {
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   server_name $serverdomain;
-  ssl_certificate ${nginxcertpath}/${serverdomain}/fullchain.pem;
-  ssl_certificate_key ${nginxcertpath}/${serverdomain}/privkey.pem;
+  ssl_certificate ${servercertpath}/${serverdomain}/fullchain.pem;
+  ssl_certificate_key ${servercertpath}/${serverdomain}/privkey.pem;
   location /$(grep '"path"' $serverconfig | awk -F '"' '{print $4}') { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
@@ -140,7 +136,7 @@ server {
   }
   location ~ ^/surl/(xlink|mlink)/(.*) {
     default_type 'text/plain; charset=utf-8';
-    alias ${nginxsubpath}/\$1/\$2;
+    alias ${serversubpath}/\$1/\$2;
   }
 }
 #1、reality+vision 和 reality+xhttp 客户端仅使用 www.example.com 域名连接。
@@ -150,10 +146,10 @@ DEST
 }
 
 REALITY(){
+  if [ ! -n "$serverdomain" ]; then DOMAIN; CERT; fi
   if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
-  if [ -z "$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')" ]; then DOMAIN; CERT; fi
-  serveruuid="$(xray uuid)"
   serverx25519="$(xray x25519)"
+  serveruuid="$(xray uuid)"
   cat > $serverconfig << REALITY
 {
   "log": {
@@ -201,7 +197,7 @@ REALITY(){
         "realitySettings": {
           "target": 44380,  //转发 Nginx 监听进程
           "xver": 1,
-          "serverNames": ["$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')"],
+          "serverNames": ["$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')"],
           "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')",
           "shortIds": ["$(RANDOMSID)"]
         }
@@ -309,8 +305,7 @@ REALITY
 }
 
 RCINITD(){
-  if [ ! -f "$serverprocess" ]; then REALITY; fi
-  if [ ! -f "$serverconfig" ]; then REALITY; fi
+  if [[ ! -f "$serverprocess" && ! -n "$(cat $serverconfig)" ]]; then REALITY; DEST; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << RCINITD
 #!/sbin/openrc-run
@@ -346,8 +341,7 @@ RCINITD
 }
 
 SYSTEMD(){
-  if [ ! -f "$serverprocess" ]; then REALITY; fi
-  if [ ! -f "$serverconfig" ]; then REALITY; fi
+  if [[ ! -f "$serverprocess" && ! -n "$(cat $serverconfig)" ]]; then REALITY; DEST; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << SYSTEMD
 [Unit]
@@ -400,7 +394,7 @@ DOWNLOAD(){
 }
 
 CERT(){
-  if [ -d "${nginxcertpath}/${serverdomain}" ]; then
+  if [ -d "${servercertpath}/${serverdomain}" ]; then
     HTTP
     blue "续签SSL证书。"
     certbot renew --deploy-hook 'service nginx restart'
@@ -437,15 +431,15 @@ SUBSCRIBE(){
   xsid="$(grep '"shortIds"' $serverconfig | awk -F '"' '{print $4}')"
   #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   #xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
-  mkdir -p -m 555 ${nginxsubpath}/xlink
-  mkdir -p -m 555 ${nginxsubpath}/mlink
-  cat > ${nginxsubpath}/xray << XSUB
+  mkdir -p -m 555 ${serversubpath}/xlink
+  mkdir -p -m 555 ${serversubpath}/mlink
+  cat > ${serversubpath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLSFLO
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTPFLO
 vless://${xuuid}@${xdomain}:10723?&type=kcp&headerType=utp&mtu=100&tti=30&up=100&down=300&seed=${xuuid}&udp=xudp#XKCPFLO
 
 XSUB
-  cat > ${nginxsubpath}/mihomo << MSUB
+  cat > ${serversubpath}/mihomo << MSUB
 proxies:
   - name: "XTLSFLO"
     type: vless
@@ -494,19 +488,19 @@ proxies:
     tti: 30
     password: $xuuid
 MSUB
-  if [ -n "$(cat ${nginxsubpath}/subscribe)" ]; then
-    serversalt="$(cat ${nginxsubpath}/subscribe)"
+  if [ -n "$(cat ${serversubpath}/subscribe)" ]; then
+    serversalt="$(cat ${serversubpath}/subscribe)"
   else
     readp "请输入salt值：" serversalt
-    echo "$serversalt" > ${nginxsubpath}/subscribe
+    echo "$serversalt" > ${serversubpath}/subscribe
   fi
-  rm -rf ${nginxsubpath}/xlink/*
-  rm -rf ${nginxsubpath}/mlink/*
+  rm -rf ${serversubpath}/xlink/*
+  rm -rf ${serversubpath}/mlink/*
   serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
-  serverbase="$(base64 -w 0 ${nginxsubpath}/xray)"
-  echo "$serverbase" > ${nginxsubpath}/xlink/${serveruser}
-  cat ${nginxsubpath}/mihomo > ${nginxsubpath}/mlink/${serveruser}
-  chmod -R 555 $nginxsubpath
+  serverbase="$(base64 -w 0 ${serversubpath}/xray)"
+  echo "$serverbase" > ${serversubpath}/xlink/${serveruser}
+  cat ${serversubpath}/mihomo > ${serversubpath}/mlink/${serveruser}
+  chmod -R 555 $serversubpath
   subxlink="https://${serverdomain}/surl/xlink/${serveruser}"
   submlink="https://${serverdomain}/surl/mlink/${serveruser}"
   blue "\nXray\n"; purple "$subxlink\n"; $qrcmd "$subxlink"; blue "\nMihomo\n"; purple "$submlink\n"; $qrcmd "$submlink"
@@ -525,7 +519,7 @@ SSHD(){
 
 Nginx(){
   while true; do
-    purple "\n检测到"$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')"证书。\n"
+    purple "\n检测到"$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')"证书。\n"
     blue "1、续签证书"
     blue "2、更改域名"
     blue "3、退出"
@@ -582,7 +576,6 @@ CHECK(){
   elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
     release="ubuntu"
   fi
-  
   if [ -z "$release" ]; then
     red "未知架构！"
     exit 0
@@ -619,15 +612,16 @@ case "$(uname -m)" in
 esac
 
 servername="xray"
+serverpath="/etc/aio/${servername}"
+serversubpath="/etc/aio/subscribe"
+servercertpath="/etc/letsencrypt/live"
+serverconfig="${serverpath}/config.json"
+serverprocess="${serverpath}/${servername}"
+serverdomain="$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
 serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
 servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
 serverurl="${serversite}/${servertag}/${serverfile}"
-serverpath="/etc/aio/${servername}"
-serverprocess="${serverpath}/${servername}"
-serverconfig="${serverpath}/${servername}.json"
-nginxsubpath="/etc/aio/subscribe"
-nginxcertpath="/etc/letsencrypt/live"
 
 purple "Mu"
 CHECK
