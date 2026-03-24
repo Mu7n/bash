@@ -425,7 +425,7 @@ RANDOMSID(){
 }
 
 SUBSCRIBE(){
-  if [[ ! -f "$serverconfig" || -z "$serverdomain" || "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" != "$(grep "$servercertpath" $nginxconfig 2>&1 | awk -F '/' 'NR==1 {print $5}')"]]; then DEST; fi
+  if [[ ! -f "$serverconfig" || -z "$serverdomain" || "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" != "$(grep "$servercertpath" $nginxconfig 2>&1 | awk -F '/' 'NR==1 {print $5}')" ]]; then DEST; fi
   xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
   xpublic="$(grep '"path"' $serverconfig | awk -F '"' '{print $4}')"
