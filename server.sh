@@ -79,8 +79,16 @@ HTTP
 }
 
 DEST(){
-  if [ ! -f "$serverconfig" ]; then REALITY; fi
-  if [ -z "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" ]; then DOMAIN; CERT; fi
+  if [[ -f "$serverconfig" && -n "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" ]]; then
+    serverdomain="$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')"
+  else
+    REALITY
+  fi
+  if [ "$(nginx -v 2>&1 | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(nginx -v 2>&1 | awk -F '.' '{print $3}')" -gt 0 ]; then
+    nginxhttp="ssl proxy_protocol;http2 on;"
+  else
+    nginxhttp="ssl http2 proxy_protocol;"
+  fi
   cat > $nginxconfig << DEST
 server {
   listen 80;
@@ -193,7 +201,7 @@ REALITY(){
         "realitySettings": {
           "target": 44380,  //转发 Nginx 监听进程
           "xver": 1,
-          "serverNames": ["$serverdomain"],
+          "serverNames": ["$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')"],
           "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')",
           "shortIds": ["$(RANDOMSID)"]
         }
@@ -486,7 +494,7 @@ proxies:
     tti: 30
     password: $xuuid
 MSUB
-  if [[ -f "${nginxsubpath}/subscribe" && -n "$(cat ${nginxsubpath}/subscribe)" ]]; then
+  if [ -n "$(cat ${nginxsubpath}/subscribe)" ]; then
     serversalt="$(cat ${nginxsubpath}/subscribe)"
   else
     readp "请输入salt值：" serversalt
@@ -517,7 +525,7 @@ SSHD(){
 
 Nginx(){
   while true; do
-    purple "\n检测到$serverdomain证书。\n"
+    purple "\n检测到"$(ls -l $nginxcertpath 2>&1 | awk '/^d/ {print $NF}')"证书。\n"
     blue "1、续签证书"
     blue "2、更改域名"
     blue "3、退出"
@@ -574,6 +582,7 @@ CHECK(){
   elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
     release="ubuntu"
   fi
+  
   if [ -z "$release" ]; then
     red "未知架构！"
     exit 0
@@ -600,12 +609,6 @@ CHECK(){
     qrcmd="qrencode -m 1 -t UTF8i"
     SYSTEMD
   fi
-  if [ "$(echo "$nginxversion" | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(echo "$nginxversion" | awk -F '.' '{print $3}')" -gt 0 ]; then
-    nginxhttp="ssl proxy_protocol;http2 on;"
-  else
-    nginxhttp="ssl http2 proxy_protocol;"
-  fi
-  DEST
 }
 
 case "$(uname -m)" in
@@ -623,14 +626,11 @@ serverurl="${serversite}/${servertag}/${serverfile}"
 serverpath="/etc/aio/${servername}"
 serverprocess="${serverpath}/${servername}"
 serverconfig="${serverpath}/${servername}.json"
-nginxversion="$(nginx -v 2>&1)"
 nginxsubpath="/etc/aio/subscribe"
 nginxcertpath="/etc/letsencrypt/live"
 
-purple "\nMu"
-
+purple "Mu"
 CHECK
 MENU
 SSHD
-
-purple "\nEnd!"
+purple "End!"
