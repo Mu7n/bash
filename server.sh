@@ -174,7 +174,7 @@ REALITY(){
   },
   "inbounds": [
     {
-      "tag": "XTLS",
+      "tag": "vision",
       "port": 443,
       "protocol": "vless",
       "settings": {
@@ -209,7 +209,7 @@ REALITY(){
       }
     },
     {
-      "tag": "XHTTP",
+      "tag": "xhttp",
       "listen": "127.0.0.1",
       "port": 44308,
       "protocol": "vless",
@@ -237,7 +237,7 @@ REALITY(){
       }
     },
     {
-      "tag": "XKCP",
+      "tag": "mkcp",
       "port": 10723,
       "protocol": "vless",
       "settings": {
@@ -435,13 +435,13 @@ SUBSCRIBE(){
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/xray << XSUB
-vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&udp=true&packetencoding=xudp#XTLSFLO
-vless://${xuuid}@${xdomain}:443?type=xhttp&obfs=xhttp&path=${xpublic}&mode=auto&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&udp=true&packet-encoding=xudp#XHTTPFLO
-vless://$(echo -e "auto:${xuuid}@${xdomain}:10723" | base64 -w 0)?type=kcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#XKCPFLO
+vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&udp=true&packet_encoding=xudp#visionFLO
+vless://${xuuid}@${xdomain}:443?type=xhttp&obfs=xhttp&path=${xpublic}&mode=auto&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&packet-encoding=xudp#xhttpFLO
+vless://$(echo -e "auto:${xuuid}@${xdomain}:10723" | base64 -w 0)?type=kcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#mkcpFLO
 XSUB
   cat > ${serversubpath}/mihomo << MSUB
 proxies:
-  - name: "XTLSFLO"
+  - name: "vision"
     type: vless
     server: $xdomain
     port: 443
@@ -457,7 +457,7 @@ proxies:
     udp: true
     packet-encoding: xudp
     client-fingerprint: chrome
-  - name: "XHTTPFLO"
+  - name: "xhttp"
     type: vless
     server: $xdomain
     port: 443
