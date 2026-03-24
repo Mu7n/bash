@@ -477,7 +477,7 @@ proxies:
     packet-encoding: xudp
     client-fingerprint: chrome
 MSUB
-  if [ -n "$(cat ${serversubpath}/subscribe)" ]; then
+  if [[ -f "${serversubpath}/subscribe" && -n "$(cat ${serversubpath}/subscribe)" ]]; then
     serversalt="$(cat ${serversubpath}/subscribe)"
   else
     readp "请输入salt值：" serversalt
