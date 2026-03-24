@@ -439,8 +439,8 @@ SUBSCRIBE(){
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/xray << XSUB
-vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&udp=true&packet_encoding=xudp#vision
-vless://${xuuid}@${xdomain}:443?type=xhttp&obfs=xhttp&path=${xpublic}&mode=auto&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&packet-encoding=xudp#xhttp
+vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&udp=3#vision
+vless://${xuuid}@${xdomain}:443?type=xhttp&obfs=xhttp&path=${xpublic}&mode=auto&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#xhttp
 vless://$(echo -e "auto:${xuuid}@${xdomain}:10723" | base64 -w 0)?type=kcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#mkcp
 XSUB
   cat > ${serversubpath}/mihomo << MSUB
@@ -450,8 +450,8 @@ proxies:
     server: $xdomain
     port: 443
     uuid: $xuuid
-    flow: xtls-rprx-vision
     network: tcp
+    flow: xtls-rprx-vision
     tls: true
     skip-cert-verify: false
     servername: $xdomain
@@ -467,19 +467,18 @@ proxies:
     port: 443
     uuid: $xuuid
     network: xhttp
+    obfs: xhttp
+    path: $xpublic
     tls: true
     skip-cert-verify: false
     servername: $xdomain
     reality-opts:
       public-key: $xpublic
       short-id: $xsid
-    obfs: xhttp
-    xhttp-opts:
-      path:
-      - '$xuuid'
     udp: true
     packet-encoding: xudp
     client-fingerprint: chrome
+
 MSUB
   if [[ -f "${serversubpath}/subscribe" && -n "$(cat ${serversubpath}/subscribe)" ]]; then
     serversalt="$(cat ${serversubpath}/subscribe)"
