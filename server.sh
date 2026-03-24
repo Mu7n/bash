@@ -79,7 +79,7 @@ HTTP
 }
 
 DEST(){
-  if [[ ! -f "$serverconfig" || -z "$serverdomain" || -z "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" ]]; then REALITY; fi
+  if [[ ! -f "$serverconfig" || -z "$(cat $serverconfig)" || -z "$serverdomain" ]]; then REALITY; fi
   if [ "$(nginx -v 2>&1 | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(nginx -v 2>&1 | awk -F '.' '{print $3}')" -gt 0 ]; then
     nginxhttp="ssl proxy_protocol;http2 on;"
   else
@@ -197,7 +197,7 @@ REALITY(){
         "realitySettings": {
           "target": 44380,  //转发 Nginx 监听进程
           "xver": 1,
-          "serverNames": ["$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')"],
+          "serverNames": ["$serverdomain"],
           "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')",
           "shortIds": ["$(RANDOMSID)"]
         }
@@ -305,7 +305,7 @@ REALITY
 }
 
 RCINITD(){
-  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$(cat $serverconfig)" ]]; then DEST; fi
+  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$(cat $serverconfig)" || -z "$serverdomain" ]]; then DEST; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << RCINITD
 #!/sbin/openrc-run
@@ -341,7 +341,7 @@ RCINITD
 }
 
 SYSTEMD(){
-  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$(cat $serverconfig)" ]]; then DEST; fi
+  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$(cat $serverconfig)" || -z "$serverdomain" ]]; then DEST; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << SYSTEMD
 [Unit]
@@ -425,7 +425,11 @@ RANDOMSID(){
 }
 
 SUBSCRIBE(){
-  if [[ ! -f "$serverconfig" || -z "$serverdomain" || "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" != "$(grep "$servercertpath" $nginxconfig 2>&1 | awk -F '/' 'NR==1 {print $5}')" ]]; then DEST; fi
+  if [[ ! -f "$serverconfig" || -z "$(cat $serverconfig)" || -z "$serverdomain" ]]; then
+    DEST
+  elif [[ "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" != "$(grep "$servercertpath" $nginxconfig 2>&1 | awk -F '/' 'NR==1 {print $5}')" ]]; then
+    REALITY && DEST
+  fi
   xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
   xpublic="$(grep '"path"' $serverconfig | awk -F '"' '{print $4}')"
