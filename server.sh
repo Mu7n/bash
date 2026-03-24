@@ -471,8 +471,8 @@ proxies:
       short-id: $xsid
     obfs: xhttp
     xhttp-opts:
-      xhttp-path: $xuuid
-      xhttp-mode: auto
+      path: $xuuid
+      mode: auto
     udp: true
     packet-encoding: xudp
     client-fingerprint: chrome
