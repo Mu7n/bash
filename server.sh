@@ -435,9 +435,9 @@ SUBSCRIBE(){
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/xray << XSUB
-vless://$(echo -e "auto:${xuuid}@${xdomain}:443" | base64 -w 0)?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLSFLO
-vless://$(echo -e "auto:${xuuid}@${xdomain}:443" | base64 -w 0)?obfs=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTPFLO
-vless://$(echo -e "auto:${xuuid}@${xdomain}:10723" | base64 -w 0)?&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D&udp=3#XKCPFLO
+vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&udp=true&packet=xudp#XTLSFLO
+vless://${xuuid}@${xdomain}:443?obfs=xhttp&path=${xpublic}&mode=auto&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&udp=true&encoding=xudp#XHTTPFLO
+vless://${xuuid}@${xdomain}:10723?&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#XKCPFLO
 XSUB
   cat > ${serversubpath}/mihomo << MSUB
 proxies:
@@ -462,7 +462,7 @@ proxies:
     server: $xdomain
     port: 443
     uuid: $xuuid
-    network: xhttp
+    obfs: xhttp
     tls: true
     skip-cert-verify: false
     servername: $xdomain
@@ -470,8 +470,8 @@ proxies:
       public-key: $xpublic
       short-id: $xsid
     xhttp-opts:
-      _path: $xuuid
-      _mode: auto
+      path: $xuuid
+      mode: auto
     udp: true
     packet-encoding: xudp
     client-fingerprint: chrome
@@ -485,7 +485,7 @@ MSUB
   rm -rf ${serversubpath}/xlink/*
   rm -rf ${serversubpath}/mlink/*
   serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
-  cat ${serversubpath}/xray > ${serversubpath}/xlink/${serveruser}
+  echo -e "$(base64 -w 0 ${serversubpath}/xray)" > ${serversubpath}/xlink/${serveruser}
   cat ${serversubpath}/mihomo > ${serversubpath}/mlink/${serveruser}
   chmod -R 555 $serversubpath
   subxlink="https://${serverdomain}/surl/xlink/${serveruser}"
