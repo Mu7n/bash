@@ -146,7 +146,7 @@ DEST
 }
 
 REALITY(){
-  if [ ! -n "$serverdomain" ]; then DOMAIN; CERT; fi
+  if [ -z "$serverdomain" ]; then DOMAIN; CERT; fi
   if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
@@ -305,7 +305,7 @@ REALITY
 }
 
 RCINITD(){
-  if [[ ! -f "$serverprocess" && ! -n "$(cat $serverconfig)" ]]; then REALITY; DEST; fi
+  if [ ! -f "$serverprocess" ] && [ -z "$(cat $serverconfig)" ]; then REALITY; DEST; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << RCINITD
 #!/sbin/openrc-run
@@ -341,7 +341,7 @@ RCINITD
 }
 
 SYSTEMD(){
-  if [[ ! -f "$serverprocess" && ! -n "$(cat $serverconfig)" ]]; then REALITY; DEST; fi
+  if [ ! -f "$serverprocess" ] && [ -z "$(cat $serverconfig)" ]; then REALITY; DEST; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << SYSTEMD
 [Unit]
