@@ -478,6 +478,22 @@ proxies:
     udp: true
     packet-encoding: xudp
     client-fingerprint: chrome
+  - name: "mkcp"
+    type: vless
+    server: $xdomain
+    port: 10723
+    uuid: $xuuid
+    network: kcp
+    obfs: kcp
+    header: utp
+    congestion: true
+    mtu: 100
+    tti: 30
+    up: "100 Mbps"
+    down: "200 Mbps"
+    seed: $xuuid
+    udp: true
+    packet-encoding: xudp
 
 MSUB
   if [[ -f "${serversubpath}/subscribe" && -n "$(cat ${serversubpath}/subscribe)" ]]; then
