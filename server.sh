@@ -435,9 +435,9 @@ SUBSCRIBE(){
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/xray << XSUB
-vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&udp=true&packet=xudp#XTLSFLO
-vless://${xuuid}@${xdomain}:443?obfs=xhttp&path=${xpublic}&mode=auto&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&udp=true&encoding=xudp#XHTTPFLO
-vless://${xuuid}@${xdomain}:10723?&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#XKCPFLO
+vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&udp=true&packetencoding=xudp#XTLSFLO
+vless://${xuuid}@${xdomain}:443?type=xhttp&obfs=xhttp&path=${xpublic}&mode=auto&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&udp=true&packet-encoding=xudp#XHTTPFLO
+vless://${xuuid}@${xdomain}:10723?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#XKCPFLO
 XSUB
   cat > ${serversubpath}/mihomo << MSUB
 proxies:
@@ -462,16 +462,17 @@ proxies:
     server: $xdomain
     port: 443
     uuid: $xuuid
-    obfs: xhttp
+    network: xhttp
     tls: true
     skip-cert-verify: false
     servername: $xdomain
     reality-opts:
       public-key: $xpublic
       short-id: $xsid
+    obfs: xhttp
     xhttp-opts:
-      path: $xuuid
-      mode: auto
+      xhttp-path: $xuuid
+      xhttp-mode: auto
     udp: true
     packet-encoding: xudp
     client-fingerprint: chrome
