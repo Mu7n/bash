@@ -305,7 +305,7 @@ REALITY
 }
 
 RCINITD(){
-  if [[ ! -f "$serverprocess" || ! -d "$serverconfig" || ! -n "$(cat $serverconfig)" ]]; then REALITY; DEST; fi
+  if [[ ! -f "$serverprocess" || ! -d "$serverconfig" || ! -n "$(cat $serverconfig)" ]]; then DEST; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << RCINITD
 #!/sbin/openrc-run
@@ -341,7 +341,7 @@ RCINITD
 }
 
 SYSTEMD(){
-  if [[ ! -f "$serverprocess" || ! -d "$serverconfig" || ! -n "$(cat $serverconfig)" ]]; then REALITY; DEST; fi
+  if [[ ! -f "$serverprocess" || ! -d "$serverconfig" || ! -n "$(cat $serverconfig)" ]]; then DEST; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << SYSTEMD
 [Unit]
