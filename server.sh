@@ -435,8 +435,8 @@ SUBSCRIBE(){
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XTLSFLO
-vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTPFLO
-vless://${xuuid}@${xdomain}:10723?&type=kcp&headerType=utp&mtu=100&tti=30&up=100&down=300&seed=${xuuid}&udp=xudp#XKCPFLO
+vless://${xuuid}@${xdomain}:443?obfs=xhttp&path=${xpublic}&mode=auto&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#XHTTPFLO
+vless://${xuuid}@${xdomain}:10723?&obfs=kcp&obfsparam={\"header\":\"utp\",\"congestion\":true,\"mtu\":\"100\",\"tti\":\"30\",\"uplinkCapacity\":\"100\",\"downlinkCapacity\":\"200\",\"seed\":\"${xuuid}\"}#XKCPFLO
 
 XSUB
   cat > ${serversubpath}/mihomo << MSUB
@@ -475,18 +475,6 @@ proxies:
     udp: true
     packet-encoding: xudp
     client-fingerprint: chrome
-  - name: "XKCPFLO"
-    type: vless
-    server: $xdomain
-    port: 10723
-    uuid: $xuuid
-    network: kcp
-    congestion-controller: bbr
-    up: 100
-    down: 300
-    mtu: 100
-    tti: 30
-    password: $xuuid
 MSUB
   if [ -n "$(cat ${serversubpath}/subscribe)" ]; then
     serversalt="$(cat ${serversubpath}/subscribe)"
