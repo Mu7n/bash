@@ -364,13 +364,13 @@ RANDOMSID(){
 }
 
 SUBSCRIBE(){
-  if [[ ! -f "$serverconfig" || ! -n "$serverdomain" ]]; then REALITY; DEST; fi
+  if [[ ! -f "$serverconfig" || ! -n "$serverdomain" || ! -n "$nginxlocation" ]]; then REALITY; DEST; fi
+  #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
+  #xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
   xpublic="$(grep '"path"' $serverconfig | awk -F '"' '{print $4}')"
   xsid="$(grep '"shortIds"' $serverconfig | awk -F '"' '{print $4}')"
-  #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
-  #xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/xray << XSUB
