@@ -532,13 +532,13 @@ SYSTEMD
 }
 
 CHECK(){
-  if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release }; then
+  if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release; }; then
     release="alpine"
     RCINITD
-  elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release }; then
+  elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
     release="debian"
     SYSTEMD
-  elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release }; then
+  elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
     release="ubuntu"
     SYSTEMD
   else
