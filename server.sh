@@ -304,64 +304,6 @@ REALITY
   service $servername restart && purple "Xray配置完成！"
 }
 
-RCINITD(){
-  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$serverdomain" || -z "$serverxdomain" || -z "$serverndomain" ]]; then DEST; fi
-  if [ ! -f "$serversystem" ]; then
-    cat > $serversystem << RCINITD
-#!/sbin/openrc-run
-name="$servername"
-description="$servername Service"
-supervisor=supervise-daemon
-respawn_delay=5
-respawn_max=2
-respawn_period=600
-pidfile="/run/\${RC_SVCNAME}.pid"
-rc_ulimit="-u 10240 -n 102400"
-capabilities="^cap_net_bind_service,^cap_net_admin,^cap_net_raw"
-extra_commands="checkconfig"
-confdir=${confdir:-"$serverpath"}
-command="$serverprocess"
-command_args="run -confdir \$confdir"
-required_files="\$confdir"
-depend() {
-  need net
-  want dns ntp-client
-  after firewall
-}
-checkconfig() {
-  \$command \$command_args -test
-  eend \$?
-}
-start_pre() {
-  checkconfig || return 1
-}
-RCINITD
-    chmod +x $serversystem && $serverenable && service $servername start
-  fi
-}
-
-SYSTEMD(){
-  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$serverdomain" || -z "$serverxdomain" || -z "$serverndomain" ]]; then DEST; fi
-  if [ ! -f "$serversystem" ]; then
-    cat > $serversystem << SYSTEMD
-[Unit]
-Description=$servername Service
-After=network.target nss-lookup.target
-[Service]
-ExecStart=$serverprocess run -confdir $serverpath
-Restart=on-failure
-RestartPreventExitStatus=23
-LimitNPROC=10240
-LimitNOFILE=102400
-RuntimeDirectory=$servername
-RuntimeDirectoryMode=0755
-[Install]
-WantedBy=multi-user.target
-SYSTEMD
-    chmod +x $serversystem && $serverenable && service $servername start
-  fi
-}
-
 DOWNLOAD(){
   while true; do
     while true; do
@@ -526,6 +468,102 @@ SSHD(){
   fi
 }
 
+RCINITD(){
+  if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then
+    blue "开始安装。"
+    apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw
+  fi
+  if [ ! -f "$serversystem" ]; then
+    cat > $serversystem << RCINITD
+#!/sbin/openrc-run
+name="$servername"
+description="$servername Service"
+supervisor=supervise-daemon
+respawn_delay=5
+respawn_max=2
+respawn_period=600
+pidfile="/run/\${RC_SVCNAME}.pid"
+rc_ulimit="-u 10240 -n 102400"
+capabilities="^cap_net_bind_service,^cap_net_admin,^cap_net_raw"
+extra_commands="checkconfig"
+confdir=${confdir:-"$serverpath"}
+command="$serverprocess"
+command_args="run -confdir \$confdir"
+required_files="\$confdir"
+depend() {
+  need net
+  want dns ntp-client
+  after firewall
+}
+checkconfig() {
+  \$command \$command_args -test
+  eend \$?
+}
+start_pre() {
+  checkconfig || return 1
+}
+RCINITD
+    chmod +x $serversystem && $serverenable
+  fi
+}
+
+SYSTEMD(){
+  if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then
+    blue "开始安装。"
+    apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw
+  fi
+  if [ ! -f "$serversystem" ]; then
+    cat > $serversystem << SYSTEMD
+[Unit]
+Description=$servername Service
+After=network.target nss-lookup.target
+[Service]
+ExecStart=$serverprocess run -confdir $serverpath
+Restart=on-failure
+RestartPreventExitStatus=23
+LimitNPROC=10240
+LimitNOFILE=102400
+RuntimeDirectory=$servername
+RuntimeDirectoryMode=0755
+[Install]
+WantedBy=multi-user.target
+SYSTEMD
+    chmod +x $serversystem && $serverenable
+  fi
+}
+
+CHECK(){
+  if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release; }; then
+    release="alpine"
+  elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
+    release="debian"
+  elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
+    release="ubuntu"
+  fi
+  if [ -z "$release" ]; then
+    red "未知架构！"
+    exit 0
+  elif [ "$release" == alpine ]; then
+    serversystem="/etc/init.d/${servername}"
+    serverenable="rc-update add $servername"
+    nginxpid="/run/nginx/nginx.pid"
+    nginxconfig="/etc/nginx/http.d/default.conf"
+    qrcmd="qr --ascii"
+    RCINITD
+  elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then
+    serversystem="/etc/systemd/system/${servername}.service"
+    serverenable="systemctl enable $servername"
+    nginxpid="/run/nginx.pid"
+    nginxconfig="/etc/nginx/sites-available/default"
+    qrcmd="qrencode -m 1 -t UTF8i"
+    SYSTEMD
+  fi
+  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$serverdomain" || -z "$serverxdomain" || -z "$serverndomain" ]]; then
+    HTTP
+    DEST
+  fi
+}
+
 Nginx(){
   while true; do
     purple "\n检测到"$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')"证书。\n"
@@ -575,42 +613,6 @@ MENU(){
       *) red "请重新输入！"; continue;;
     esac
   done
-}
-
-CHECK(){
-  if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release; }; then
-    release="alpine"
-  elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
-    release="debian"
-  elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
-    release="ubuntu"
-  fi
-  if [ -z "$release" ]; then
-    red "未知架构！"
-    exit 0
-  elif [ "$release" == alpine ]; then
-    if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then
-      blue "开始安装。"
-      apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw
-    fi
-    serversystem="/etc/init.d/${servername}"
-    serverenable="rc-update add $servername"
-    nginxpid="/run/nginx/nginx.pid"
-    nginxconfig="/etc/nginx/http.d/default.conf"
-    qrcmd="qr --ascii"
-    RCINITD
-  elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then
-    if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then
-      blue "开始安装。"
-      apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw
-    fi
-    serversystem="/etc/systemd/system/${servername}.service"
-    serverenable="systemctl enable $servername"
-    nginxpid="/run/nginx.pid"
-    nginxconfig="/etc/nginx/sites-available/default"
-    qrcmd="qrencode -m 1 -t UTF8i"
-    SYSTEMD
-  fi
 }
 
 case "$(uname -m)" in
