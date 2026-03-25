@@ -369,8 +369,8 @@ SUBSCRIBE(){
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/xray << XSUB
-vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=3#vision
-vless://${xuuid}@${xdomain}:443?type=xhttp&obfs=xhttp&path=${xrpk}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=3#xhttp
+vless://$(echo -e "${xuuid}@${xdomain}:443" | base64 -w 0)?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=3#vision
+vless://:${xuuid}@${xdomain}:443?type=xhttp&obfs=xhttp&path=${xrpk}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=3#xhttp
 vless://$(echo -e ":${xuuid}@${xdomain}:10723" | base64 -w 0)?type=kcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#mkcp
 
 XSUB
@@ -420,11 +420,11 @@ proxies:
     obfs-opts:
       header: utp
       congestion: true
-      mtu: 100
-      tti: 30
-      up: "100 Mbps"
-      down: "200 Mbps"
-      seed: $xuuid
+    mtu: 100
+    tti: 30
+    up: "100 Mbps"
+    down: "200 Mbps"
+    password: $xuuid
     udp: true
     packet-encoding: xudp
 
