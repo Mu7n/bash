@@ -80,11 +80,6 @@ HTTP
 
 DEST(){
   if [ ! -n "$serverdomain" ]; then REALITY; fi
-  if [ "$(nginx -v 2>&1 | awk -F '.' '{print $2 $3}')" -ge 251 ]; then
-    nginxhttp="ssl;http2 on;"
-  else
-    nginxhttp="ssl http2;"
-  fi
   cat > $nginxconfig << DEST
 server {
   listen 80;
@@ -544,6 +539,11 @@ CHECK(){
   else
     red "未知架构！"
     exit 0
+  fi
+  if [ "$(nginx -v 2>&1 | awk -F '.' '{print $2 $3}')" -ge 251 ]; then
+    nginxhttp="ssl;http2 on;"
+  else
+    nginxhttp="ssl http2;"
   fi
   if [ ! -n "$serverdomain" ]; then
     HTTP; DOMAIN; CERT
