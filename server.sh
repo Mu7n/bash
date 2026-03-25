@@ -527,7 +527,7 @@ RuntimeDirectoryMode=0755
 [Install]
 WantedBy=multi-user.target
 SYSTEMD
-    chmod +x $serversystem && $serverenable
+    chmod 644 $serversystem && $serverenable
   fi
 }
 
