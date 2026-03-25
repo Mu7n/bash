@@ -79,7 +79,7 @@ HTTP
 }
 
 DEST(){
-  if [[ ! -f "$serverconfig" || -z "$(cat $serverconfig)" || -z "$serverdomain" ]]; then REALITY; fi
+  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$serverdomain" || -z "$serverxdomain" || -z "$serverndomain" ]]; then REALITY; fi
   if [ "$(nginx -v 2>&1 | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(nginx -v 2>&1 | awk -F '.' '{print $3}')" -gt 0 ]; then
     nginxhttp="ssl proxy_protocol;http2 on;"
   else
@@ -142,7 +142,7 @@ server {
 #1、reality+vision 和 reality+xhttp 客户端仅使用 www.example.com 域名连接。
 #2、xhttp+tls 客户端可使用 www.example.com 或 cdn.example.com 域名连接。
 DEST
-  pkill -9 nginx & service nginx restart && purple "Nginx配置完成！"
+  service nginx restart && purple "Nginx配置完成！"
 }
 
 REALITY(){
@@ -305,7 +305,7 @@ REALITY
 }
 
 RCINITD(){
-  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$(cat $serverconfig)" || -z "$serverdomain" ]]; then DEST; fi
+  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$serverdomain" || -z "$serverxdomain" || -z "$serverndomain" ]]; then DEST; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << RCINITD
 #!/sbin/openrc-run
@@ -341,7 +341,7 @@ RCINITD
 }
 
 SYSTEMD(){
-  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$(cat $serverconfig)" || -z "$serverdomain" ]]; then DEST; fi
+  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$serverdomain" || -z "$serverxdomain" || -z "$serverndomain" ]]; then DEST; fi
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << SYSTEMD
 [Unit]
@@ -425,9 +425,9 @@ RANDOMSID(){
 }
 
 SUBSCRIBE(){
-  if [[ ! -f "$serverconfig" || -z "$(cat $serverconfig)" || -z "$serverdomain" ]]; then
+  if [[ ! -f "$serverconfig" || -z "$serverdomain" || -z "$serverxdomain" || -z "$serverndomain" ]]; then
     DEST
-  elif [[ "$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')" != "$(grep "$servercertpath" $nginxconfig 2>&1 | awk -F '/' 'NR==1 {print $5}')" ]]; then
+  elif [[ -n "$serverxdomain" && -n "$serverndomain" ]] && [[ "$serverxdomain" != "$serverndomain" ]]; then
     REALITY && DEST
   fi
   xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
@@ -441,7 +441,9 @@ SUBSCRIBE(){
   cat > ${serversubpath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&udp=3#vision
 vless://${xuuid}@${xdomain}:443?type=xhttp&obfs=xhttp&path=${xpublic}&mode=auto&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#xhttp
-vless://$(echo -e "auto:${xuuid}@${xdomain}:10723" | base64 -w 0)?type=kcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#mkcp
+#vless://$(echo -e "auto:${xuuid}@${xdomain}:10723" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#mkcp
+vless://auto:${xuuid}@${xdomain}:10723?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#mkcp
+
 XSUB
   cat > ${serversubpath}/mihomo << MSUB
 proxies:
@@ -483,15 +485,15 @@ proxies:
     server: $xdomain
     port: 10723
     uuid: $xuuid
-    network: kcp
-    obfs: kcp
-    header: utp
-    congestion: true
-    mtu: 100
-    tti: 30
-    up: "100 Mbps"
-    down: "200 Mbps"
-    seed: $xuuid
+    network: mkcp
+    obfs: mkcp
+    _header: utp
+    _congestion: true
+    _mtu: 100
+    _tti: 30
+    _up: "100 Mbps"
+    _down: "200 Mbps"
+    _seed: $xuuid
     udp: true
     packet-encoding: xudp
 
@@ -625,6 +627,8 @@ servercertpath="/etc/letsencrypt/live"
 serverconfig="${serverpath}/config.json"
 serverprocess="${serverpath}/${servername}"
 serverdomain="$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')"
+serverxdomain="$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')"
+serverndomain="$(grep "$servercertpath" $nginxconfig 2>&1 | awk -F '/' 'NR==1 {print $5}')"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
 serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
 servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
