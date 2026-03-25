@@ -79,7 +79,7 @@ HTTP
 }
 
 DEST(){
-  if [ ! -n "$nginxlocation" ]; then REALITY; fi
+  if [ ! -n "$serverdomain" ]; then REALITY; fi
   if [ "$nginxversion" -le 251 ]; then
     nginxhttp="ssl;http2 on;"
   else
@@ -364,9 +364,7 @@ RANDOMSID(){
 }
 
 SUBSCRIBE(){
-  if [[ ! -f "$serverconfig" || ! -n "$serverdomain" || ! -n "$nginxlocation" ]]; then REALITY; DEST; fi
-  #xipv4="$(curl -s -4 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
-  #xipv6="$(curl -s -6 http://www.cloudflare.com/cdn-cgi/trace | grep "ip" | awk -F "[=]" '{print $2}')"
+  if [[ ! -f "$serverconfig" || ! -n "$serverdomain" ]]; then REALITY; DEST; fi
   xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
   xpublic="$(grep '"path"' $serverconfig | awk -F '"' '{print $4}')"
@@ -619,12 +617,11 @@ serversubpath="/etc/aio/subscribe"
 servercertpath="/etc/letsencrypt/live"
 serverconfig="${serverpath}/config.json"
 serverprocess="${serverpath}/${servername}"
-serverdomain="$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')"
+serverdomain="$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
 serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
 servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
 serverurl="${serversite}/${servertag}/${serverfile}"
-nginxlocation="$(grep '"path"' $serverconfig 2>&1 | awk -F '"' '{print $4}')"
 nginxversion="$(nginx -v 2>&1 | awk -F '.' '{print $2}')$(nginx -v 2>&1 | awk -F '.' '{print $3}')"
 
 purple "Mu"
