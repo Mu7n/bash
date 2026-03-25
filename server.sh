@@ -514,11 +514,16 @@ SYSTEMD(){
 Description=$servername Service
 After=network.target nss-lookup.target
 [Service]
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
 ExecStart=$serverprocess run -confdir $serverpath
 Restart=on-failure
 RestartPreventExitStatus=23
 LimitNPROC=10240
 LimitNOFILE=102400
+RuntimeDirectory=$servername
+RuntimeDirectoryMode=0755
 [Install]
 WantedBy=multi-user.target
 SYSTEMD
