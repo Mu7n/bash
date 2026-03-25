@@ -79,11 +79,11 @@ HTTP
 }
 
 DEST(){
-  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$serverdomain" || -z "$serverxdomain" || -z "$serverndomain" ]]; then REALITY; fi
-  if [ "$(nginx -v 2>&1 | awk -F '.' '{print $2}')" -ge 25 ] && [ "$(nginx -v 2>&1 | awk -F '.' '{print $3}')" -gt 0 ]; then
-    nginxhttp="ssl proxy_protocol;http2 on;"
+  if [ ! -n "$nginxlocation" ]; then REALITY; fi
+  if [ "$nginxversion" -le 251 ]; then
+    nginxhttp="ssl;http2 on;"
   else
-    nginxhttp="ssl http2 proxy_protocol;"
+    nginxhttp="ssl http2;"
   fi
   cat > $nginxconfig << DEST
 server {
@@ -92,14 +92,14 @@ server {
   return 301 https://\$host\$request_uri;
 }
 server {
-  listen 127.0.0.1:44380 default_server $nginxhttp
+  listen 127.0.0.1:44380 default_server proxy_protocol $nginxhttp
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   ssl_protocols TLSv1.2 TLSv1.3;
   ssl_reject_handshake on;
 } #限定域名连接，禁止其他方式访问网站
 server {
-  listen 127.0.0.1:44380 $nginxhttp
+  listen 127.0.0.1:44380 proxy_protocol $nginxhttp
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   server_name cdn$serverdomain; #修改 CDN 域名
@@ -118,7 +118,7 @@ server {
 server {
   #listen 443 quic reuseport; #版本不小于 v1.25.0 且 SSL 库支持 QUIC
   #listen [::]:443 quic reuseport; #版本不小于 v1.25.0 且 SSL 库支持 QUIC
-  listen 127.0.0.1:44380 $nginxhttp
+  listen 127.0.0.1:44380 proxy_protocol $nginxhttp
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
   server_name $serverdomain;
@@ -336,11 +336,9 @@ DOWNLOAD(){
 
 CERT(){
   if [ -d "${servercertpath}/${serverdomain}" ]; then
-    HTTP
     blue "续签SSL证书。"
     certbot renew --deploy-hook 'service nginx restart'
   else
-    HTTP
     blue "申请SSL证书。"
     rm -rf /etc/letsencrypt/{archive,live,renewal}
     echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
@@ -366,11 +364,7 @@ RANDOMSID(){
 }
 
 SUBSCRIBE(){
-  if [[ ! -f "$serverconfig" || -z "$serverdomain" || -z "$serverxdomain" || -z "$serverndomain" ]]; then
-    DEST
-  elif [[ -n "$serverxdomain" && -n "$serverndomain" ]] && [[ "$serverxdomain" != "$serverndomain" ]]; then
-    REALITY && DEST
-  fi
+  if [[ ! -f "$serverconfig" || ! -n "$serverdomain" ]]; then REALITY; DEST; fi
   xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
   xpublic="$(grep '"path"' $serverconfig | awk -F '"' '{print $4}')"
@@ -382,10 +376,10 @@ SUBSCRIBE(){
   cat > ${serversubpath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}&udp=3#vision
 vless://${xuuid}@${xdomain}:443?type=xhttp&obfs=xhttp&path=${xpublic}&mode=auto&tls=true&fp=chrome&security=reality&sni=${xdomain}&pbk=${xpublic}&sid=${xsid}#xhttp
-#vless://$(echo -e "auto:${xuuid}@${xdomain}:10723" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#mkcp
 vless://auto:${xuuid}@${xdomain}:10723?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#mkcp
 
 XSUB
+#vless://$(echo -e "auto:${xuuid}@${xdomain}:10723" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#mkcp
   cat > ${serversubpath}/mihomo << MSUB
 proxies:
   - name: "vision"
@@ -532,8 +526,6 @@ Restart=on-failure
 RestartPreventExitStatus=23
 LimitNPROC=10240
 LimitNOFILE=102400
-RuntimeDirectory=$servername
-RuntimeDirectoryMode=0755
 [Install]
 WantedBy=multi-user.target
 SYSTEMD
@@ -542,12 +534,24 @@ SYSTEMD
 }
 
 CHECK(){
-  if [ ! -f "$serverprocess" ]; then
-    DOWNLOAD; REALITY
+  if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release }; then
+    release="alpine"
+    RCINITD
+  elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release }; then
+    release="debian"
+    SYSTEMD
+  elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release }; then
+    release="ubuntu"
+    SYSTEMD
+  else
+    red "未知架构！"
+    exit 0
+  fi
+  if [ ! -n "$serverdomain" ]; then
+    HTTP; DOMAIN; CERT
+  fi
   if [ ! -f "$serverconfig" ]; then
     REALITY; DEST
-  if [[ -z "$serverdomain" || -z "$serverxdomain" || -z "$serverndomain" ]]; then
-    HTTP; DOMAIN; CERT; DEST
   fi
 }
 
@@ -602,20 +606,6 @@ MENU(){
   done
 }
 
-if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release }; then
-  release="alpine"
-  RCINITD
-elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release }; then
-  release="debian"
-  SYSTEMD
-elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release }; then
-  release="ubuntu"
-  SYSTEMD
-else
-  red "未知架构！"
-  exit 0
-fi
-
 case "$(uname -m)" in
   amd64 | x86_64) serverfile="Xray-linux-64.zip";;
   armv8 | aarch64) serverfile="Xray-linux-arm64-v8a.zip";;
@@ -630,12 +620,12 @@ servercertpath="/etc/letsencrypt/live"
 serverconfig="${serverpath}/config.json"
 serverprocess="${serverpath}/${servername}"
 serverdomain="$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')"
-serverxdomain="$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')"
-serverndomain="$(grep "$servercertpath" $nginxconfig 2>&1 | awk -F '/' 'NR==1 {print $5}')"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
 serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
 servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
 serverurl="${serversite}/${servertag}/${serverfile}"
+nginxlocation="$(grep '"path"' $serverconfig 2>&1 | awk -F '"' '{print $4}')"
+nginxversion="$(nginx -v 2>&1 | awk -F '.' '{print $2}')$(nginx -v 2>&1 | awk -F '.' '{print $3}')"
 
 purple "Mu"
 CHECK
