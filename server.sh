@@ -543,7 +543,7 @@ CHECK(){
     red "未知架构！"
     exit 0
   fi
-  if [ "$(nginx -v 2>&1 | awk -F '.' '{print $2 $3}')" -ge 251 ]; then
+  if [ "$(nginx -v 2>&1 | awk -F '[.][ ]' '{print $2 $3}')" -ge 251 ]; then
     nginxhttp="ssl;http2 on;"
   else
     nginxhttp="ssl http2;"
