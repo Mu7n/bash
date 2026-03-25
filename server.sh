@@ -146,7 +146,6 @@ DEST
 }
 
 REALITY(){
-  if [ -z "$serverdomain" ]; then DOMAIN; CERT; fi
   if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
@@ -473,6 +472,11 @@ RCINITD(){
     blue "开始安装。"
     apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw
   fi
+  serversystem="/etc/init.d/${servername}"
+  serverenable="rc-update add $servername"
+  nginxpid="/run/nginx/nginx.pid"
+  nginxconfig="/etc/nginx/http.d/default.conf"
+  qrcmd="qr --ascii"
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << RCINITD
 #!/sbin/openrc-run
@@ -512,6 +516,11 @@ SYSTEMD(){
     blue "开始安装。"
     apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw
   fi
+  serversystem="/etc/systemd/system/${servername}.service"
+  serverenable="systemctl enable $servername"
+  nginxpid="/run/nginx.pid"
+  nginxconfig="/etc/nginx/sites-available/default"
+  qrcmd="qrencode -m 1 -t UTF8i"
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << SYSTEMD
 [Unit]
@@ -533,34 +542,12 @@ SYSTEMD
 }
 
 CHECK(){
-  if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release; }; then
-    release="alpine"
-  elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release; }; then
-    release="debian"
-  elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release; }; then
-    release="ubuntu"
-  fi
-  if [ -z "$release" ]; then
-    red "未知架构！"
-    exit 0
-  elif [ "$release" == alpine ]; then
-    serversystem="/etc/init.d/${servername}"
-    serverenable="rc-update add $servername"
-    nginxpid="/run/nginx/nginx.pid"
-    nginxconfig="/etc/nginx/http.d/default.conf"
-    qrcmd="qr --ascii"
-    RCINITD
-  elif [ "$release" == debian ] || [ "$release" == ubuntu ]; then
-    serversystem="/etc/systemd/system/${servername}.service"
-    serverenable="systemctl enable $servername"
-    nginxpid="/run/nginx.pid"
-    nginxconfig="/etc/nginx/sites-available/default"
-    qrcmd="qrencode -m 1 -t UTF8i"
-    SYSTEMD
-  fi
-  if [[ ! -f "$serverprocess" || ! -f "$serverconfig" || -z "$serverdomain" || -z "$serverxdomain" || -z "$serverndomain" ]]; then
-    HTTP
-    DEST
+  if [ ! -f "$serverprocess" ]; then
+    DOWNLOAD; REALITY
+  if [ ! -f "$serverconfig" ]; then
+    REALITY; DEST
+  if [[ -z "$serverdomain" || -z "$serverxdomain" || -z "$serverndomain" ]]; then
+    HTTP; DOMAIN; CERT; DEST
   fi
 }
 
@@ -614,6 +601,20 @@ MENU(){
     esac
   done
 }
+
+if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release }; then
+  release="alpine"
+  RCINITD
+elif { [ -f "/etc/issue" ] && grep -qi "debian" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=debian" /etc/os-release }; then
+  release="debian"
+  SYSTEMD
+elif { [ -f "/etc/issue" ] && grep -qi "Ubuntu" /etc/issue } || { [ -f "/etc/os-release" ] && grep -qi "ID=ubuntu" /etc/os-release }; then
+  release="ubuntu"
+  SYSTEMD
+else
+  red "未知架构！"
+  exit 0
+fi
 
 case "$(uname -m)" in
   amd64 | x86_64) serverfile="Xray-linux-64.zip";;
