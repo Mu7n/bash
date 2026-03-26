@@ -326,7 +326,7 @@ DOWNLOAD(){
       break
     fi
   done
-  if [ -f "$serversystem" ]; then service $servername restart; fi
+  if [ -f "$serversystem" ]; then service $servername restart && purple "已重启"; fi
 }
 
 CERT(){
