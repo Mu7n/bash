@@ -137,7 +137,7 @@ server {
 #1、reality+vision 和 reality+xhttp 客户端仅使用 www.example.com 域名连接。
 #2、xhttp+tls 客户端可使用 www.example.com 或 cdn.example.com 域名连接。
 DEST
-  service nginx restart && purple "Nginx配置完成！"
+  pkill -9 nginx & service nginx restart && purple "Nginx配置完成！"
 }
 
 REALITY(){
@@ -338,7 +338,6 @@ CERT(){
     rm -rf /etc/letsencrypt/{archive,live,renewal}
     echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
     echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconfig
-    service nginx stop && pkill -9 nginx
     certbot --nginx --agree-tos -n -m ssl@cert.bot -d $serverdomain
   fi
 }
