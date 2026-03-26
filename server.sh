@@ -608,7 +608,6 @@ serversite="https://github.com/XTLS/Xray-core/releases/download"
 serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
 servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
 serverurl="${serversite}/${servertag}/${serverfile}"
-nginxversion="$(nginx -v 2>&1 | awk -F '.' '{print $2}')$(nginx -v 2>&1 | awk -F '.' '{print $3}')"
 
 purple "Mu"
 CHECK
