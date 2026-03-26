@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 #用到哪，学到哪。
 #bash <(curl -sSL https://get.docker.com)；安装docker
 #export PATH="/目录/文件:$PATH"；ln -s ${文件} /usr/local/bin；终端输入进程/脚本名称可直接运行
@@ -249,7 +248,7 @@ REALITY(){
         "mtu": 900,
         "tti": 30,
         "uplinkCapacity": 100,
-        "downlinkCapacity": 200,
+        "downlinkCapacity": 300,
         "congestion": true,
         "readBufferSize": 5,
         "writeBufferSize": 5,
@@ -351,7 +350,7 @@ DOMAIN(){
 }
 
 RANDOMSID(){
-  local chars="1a2b3c4d5e6f"
+  local chars="0123456789abcdef"
   local shortid=""
   while [ "${#shortid}" -lt "12" ]; do
     randomid="${chars:$(($RANDOM%${#chars})):1}"
@@ -369,8 +368,8 @@ SUBSCRIBE(){
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/xray << XSUB
-vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?type=tcp&obfs=xtls&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=3#vision
-vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?type=xhttp&obfs=xhttp&path=${xrpk}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=3#xhttp
+vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?type=tcp&obfs=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=xudp#vision
+vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?type=xhttp&obfs=xhttp&path=${xrpk}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=xudp#xhttp
 vless://$(echo -n ":${xuuid}@${xdomain}:10723" | base64 -w 0)?type=kcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#mkcp
 
 XSUB
