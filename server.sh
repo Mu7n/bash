@@ -368,8 +368,8 @@ SUBSCRIBE(){
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/xray << XSUB
-vless://${xuuid}@${xdomain}:443?type=tcp&tls=true&flow=xtls-rprx-vision&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&xudp=true#vision
-vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?type=xhttp&obfs=xhttp&path=${xrpk}&mode=auto&tls=true&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=xudp#xhttp
+vless://${xuuid}@${xdomain}:443?type=tcp&tls=true&flow=xtls-rprx-vision&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&xudp=true#vision
+vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?type=xhttp&obfs=xhttp&path=${xrpk}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=xudp#xhttp
 vless://$(echo -n ":${xuuid}@${xdomain}:10723" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22300%22,%22seed%22:%22${xuuid}%22%7D&mux=true&xudp=true#mkcp
 
 XSUB
