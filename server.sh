@@ -368,9 +368,9 @@ SUBSCRIBE(){
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/xray << XSUB
-vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?type=tcp&obfs=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=xudp#vision
-vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?type=xhttp&obfs=xhttp&path=${xrpk}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=xudp#xhttp
-vless://$(echo -n ":${xuuid}@${xdomain}:10723" | base64 -w 0)?type=kcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22200%22,%22seed%22:%22${xuuid}%22%7D#mkcp
+vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?obfs=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=xudp#vision
+vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?obfs=xhttp&path=${xrpk}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=xudp#xhttp
+vless://$(echo -n ":${xuuid}@${xdomain}:10723" | base64 -w 0)?obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22300%22,%22seed%22:%22${xuuid}%22%7D#mkcp
 
 XSUB
   cat > ${serversubpath}/mihomo << MSUB
@@ -380,8 +380,7 @@ proxies:
     server: $xdomain
     port: 443
     uuid: $xuuid
-    network: tcp
-    flow: xtls-rprx-vision
+    obfs: xtls-rprx-vision
     tls: true
     skip-cert-verify: false
     servername: $xdomain
@@ -396,7 +395,6 @@ proxies:
     server: $xdomain
     port: 443
     uuid: $xuuid
-    network: xhttp
     obfs: xhttp
     path: $xrpk
     tls: true
@@ -413,14 +411,14 @@ proxies:
     server: $xdomain
     port: 10723
     uuid: $xuuid
-    network: kcp
+    obfs: mkcp
     obfs-opts:
       header: utp
       congestion: true
     mtu: 100
     tti: 30
     up: "100 Mbps"
-    down: "200 Mbps"
+    down: "300 Mbps"
     password: $xuuid
     udp: true
     packet-encoding: xudp
