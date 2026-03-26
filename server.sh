@@ -370,7 +370,7 @@ SUBSCRIBE(){
   cat > ${serversubpath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=true&packetencoding=xudp#vision
 vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?type=xhttp&obfs=xhttp&path=${xrpk}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=true&packet-encoding=xudp#xhttp
-vless://${xuuid}@${xdomain}:10723?type=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22300%22,%22seed%22:%22${xuuid}%22%7D&udp=true&packet_encoding=xudp#mkcp
+vless://${xuuid}@${xdomain}:10723?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22300%22,%22seed%22:%22${xuuid}%22%7D&udp=true&packet_encoding=xudp#mkcp
 
 XSUB
   cat > ${serversubpath}/mihomo << MSUB
@@ -415,7 +415,14 @@ proxies:
     uuid: $xuuid
     network: mkcp
     obfs: mkcp
-    obfsParam: {"header":"utp","congestion":"true","mtu":"100","tti":"30","uplinkCapacity":"100","downlinkCapacity":"300","seed":"${xuuid}"}
+    obfsParam:
+      "header":"utp"
+      "congestion":"true"
+      "mtu":"100"
+      "tti":"30"
+      "uplinkCapacity":"100"
+      "downlinkCapacity":"300"
+      "seed":"${xuuid}"}
     udp: true
     packet-encoding: xudp
 
