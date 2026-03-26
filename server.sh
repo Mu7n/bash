@@ -435,7 +435,7 @@ MSUB
   fi
   rm -rf ${serversubpath}/xlink/*
   rm -rf ${serversubpath}/mlink/*
-  serveruser="$(echo -n "${servername}${serversalt}"$'\n' | md5sum | awk '{print $1}')"
+  serveruser="$(echo -n "${serversalt}": | md5sum | awk '{print $1}')"
   echo -e "$(base64 -w 0 ${serversubpath}/xray)" > ${serversubpath}/xlink/${serveruser}
   cat ${serversubpath}/mihomo > ${serversubpath}/mlink/${serveruser}
   chmod -R 555 $serversubpath
