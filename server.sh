@@ -276,7 +276,7 @@ REALITY(){
             {
               "type": "mkcp-aes128gcm",
               "settings": {
-                "password": "$serveruuid"
+                "password": "$(RANDOMSID)"
               }
             }
           ]
