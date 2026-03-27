@@ -160,11 +160,23 @@ REALITY(){
     ]
   },
   "routing": {
-    "domainStrategy": "IPIfNonMatch",
+    "domainStrategy": "AsIs",
     "rules": [
       {
-        "ip": ["geoip:cn"],
+        "domain": ["geosite:category-ads-all"],
         "outboundTag": "block"
+      },
+      {
+        "domain": ["geosite:cn"],
+        "outboundTag": "direct-out"
+      },
+      {
+        "ip": ["geoip:private", "geoip:cn", "223.5.5.5"],
+        "outboundTag": "direct-out"
+      },
+      {
+        "protocol": ["bittorrent"],
+        "outboundTag": "direct-out"
       }
     ]
   },
