@@ -80,6 +80,7 @@ HTTP
 
 DEST(){
   if [ ! -n "$serverdomain" ]; then REALITY; fi
+
   cat > $nginxconfig << DEST
 server {
   listen 80;
@@ -142,6 +143,7 @@ DEST
 
 REALITY(){
   if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
+
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
   cat > $serverconfig << REALITY
@@ -245,17 +247,17 @@ REALITY(){
       },
       "streamSettings": {
         "network": "kcp",
-        "mtu": 900,
-        "tti": 30,
-        "uplinkCapacity": 100,
-        "downlinkCapacity": 300,
+        "mtu": 1350,
+        "tti": 50,
+        "uplinkCapacity": 50,
+        "downlinkCapacity": 100,
         "congestion": true,
         "readBufferSize": 5,
         "writeBufferSize": 5,
         "finalmask": {
           "udp": [
             {
-              "type": "header-utp"
+              "type": "header-srtp"
             },
             {
               "type": "mkcp-aes128gcm",
@@ -312,10 +314,12 @@ DOWNLOAD(){
         serverurl="${serversite}/${servertag}/${serverfile}"
       fi
     done
+
     blue "$serverurl.dgst，正在下载。"
     curl -O -L -H 'Cache-Control: no-cache' $serverurl.dgst -#
     serverzip="$(sha256sum $serverfile | awk '{printf $1}')"
     serverdgst="$(awk -F '= ' '/256=/ {print $2}' $serverfile.dgst)"
+
     if [ "$serverdgst" == "$serverzip" ]; then
       blue "check！"
       mkdir -p -m 644 $serverpath
@@ -326,6 +330,7 @@ DOWNLOAD(){
       break
     fi
   done
+
   if [ -f "$serversystem" ]; then service $servername restart && purple "已重启"; fi
 }
 
@@ -369,7 +374,7 @@ SUBSCRIBE(){
   cat > ${serversubpath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&tls=true&flow=xtls-rprx-vision&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&xudp=true#vision
 vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?type=xhttp&obfs=xhttp&path=${xrpk}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=xudp#xhttp
-vless://$(echo -n ":${xuuid}@${xdomain}:10723" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22utp%22,%22congestion%22:%22true%22,%22mtu%22:%22100%22,%22tti%22:%2230%22,%22uplinkCapacity%22:%22100%22,%22downlinkCapacity%22:%22300%22,%22seed%22:%22${xuuid}%22%7D&mux=true&xudp=true#mkcp
+vless://$(echo -n ":${xuuid}@${xdomain}:10723" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22srtp%22,%22congestion%22:%22true%22,%22mtu%22:%221350%22,%22tti%22:%2250%22,%22uplinkCapacity%22:%2220%22,%22downlinkCapacity%22:%2250%22,%22seed%22:%22${xuuid}%22%7D&mux=true&xudp=true#mkcp
 
 XSUB
   cat > ${serversubpath}/mihomo << MSUB
@@ -415,6 +420,7 @@ MSUB
     readp "请输入salt值：" serversalt
     echo "$serversalt" > ${serversubpath}/subscribe
   fi
+
   rm -rf ${serversubpath}/xlink/*
   rm -rf ${serversubpath}/mlink/*
   serveruser="$(echo -n "${serversalt}": | md5sum | awk '{print $1}')"
@@ -441,12 +447,15 @@ RCINITD(){
   if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then
     blue "开始安装。"
     apk -U upgrade && apk add alpine-sdk linux-headers nginx certbot certbot-nginx unzip tar py3-qrcode ufw
+    modprobe tcp_bbr
   fi
+
   serversystem="/etc/init.d/${servername}"
   serverenable="rc-update add $servername"
   nginxpid="/run/nginx/nginx.pid"
   nginxconfig="/etc/nginx/http.d/default.conf"
   qrcmd="qr --ascii"
+
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << RCINITD
 #!/sbin/openrc-run
@@ -485,12 +494,15 @@ SYSTEMD(){
   if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then
     blue "开始安装。"
     apt update && apt upgrade -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw
+    modprobe tcp_bbr
   fi
+
   serversystem="/etc/systemd/system/${servername}.service"
   serverenable="systemctl enable $servername"
   nginxpid="/run/nginx.pid"
   nginxconfig="/etc/nginx/sites-available/default"
   qrcmd="qrencode -m 1 -t UTF8i"
+
   if [ ! -f "$serversystem" ]; then
     cat > $serversystem << SYSTEMD
 [Unit]
@@ -525,14 +537,28 @@ CHECK(){
     red "未知架构！"
     exit 0
   fi
+
+  if grep -q "tcp_bbr" /proc/modules; then
+    echo "tcp_bbr" > /etc/modules-load.d/bbr.conf
+    if sysctl -w net.ipv4.tcp_congestion_control=bbr >/dev/null 2>&1; then
+      echo "net.ipv4.tcp_congestion_control=bbr" > /etc/sysctl.d/bbr.conf
+      if sysctl -w net.core.default_qdisc=fq >/dev/null 2>&1; then
+        echo "net.core.default_qdisc=fq" >> /etc/sysctl.d/bbr.conf
+      fi
+    fi
+    sysctl -p /etc/sysctl.d/bbr.conf
+  fi
+
   if [ "$(nginx -v 2>&1 | awk -F '[.(]' '{print $2$3}')" -ge 251 ]; then
     nginxhttp="ssl;http2 on;"
   else
     nginxhttp="ssl http2;"
   fi
+
   if [ ! -n "$serverdomain" ]; then
     HTTP; DOMAIN; CERT
   fi
+
   if [ ! -f "$serverconfig" ]; then
     REALITY; DEST
   fi
