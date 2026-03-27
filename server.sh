@@ -440,7 +440,7 @@ SSHD(){
 RCINITD(){
   if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then
     blue "开始安装。"
-    apk update && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw
+    apk -U upgrade && apk add alpine-sdk linux-headers nginx certbot certbot-nginx unzip tar py3-qrcode ufw
   fi
   serversystem="/etc/init.d/${servername}"
   serverenable="rc-update add $servername"
@@ -484,7 +484,7 @@ RCINITD
 SYSTEMD(){
   if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then
     blue "开始安装。"
-    apt-get update -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw
+    apt update && apt upgrade -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw
   fi
   serversystem="/etc/systemd/system/${servername}.service"
   serverenable="systemctl enable $servername"
