@@ -168,15 +168,15 @@ REALITY(){
       },
       {
         "domain": ["geosite:cn"],
-        "outboundTag": "direct-out"
+        "outboundTag": "direct"
       },
       {
         "ip": ["geoip:private", "geoip:cn", "223.5.5.5"],
-        "outboundTag": "direct-out"
+        "outboundTag": "direct"
       },
       {
         "protocol": ["bittorrent"],
-        "outboundTag": "direct-out"
+        "outboundTag": "direct"
       }
     ]
   },
