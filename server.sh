@@ -81,7 +81,6 @@ HTTP
 }
 
 DEST(){
-  if [ ! -n "$serverdomain" ]; then REALITY; fi
   if [ ! -n "$(cat $serverconfig 2>/dev/null)" ]; then REALITY; fi
   cat > $nginxconfig << DEST
 server {
@@ -373,7 +372,7 @@ RANDOMSID(){
 }
 
 SUBSCRIBE(){
-  if [[ -z "$(cat $serverconfig)" || ! -n "$serverdomain" ]]; then REALITY; DEST; fi
+  if [ ! -n "$(cat $serverconfig 2>/dev/null)" ]; then REALITY; DEST; fi
   xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
   xsid="$(grep '"shortIds"' $serverconfig | awk -F '"' '{print $4}')"
@@ -563,8 +562,12 @@ CHECK(){
     nginxhttp="ssl http2;"
   fi
 
-  if [ -z "$serverdomain" ]; then
-    HTTP; DOMAIN; CERT; REALITY; DEST
+  if [ ! -n "$serverdomain" ]; then
+    HTTP; DOMAIN; CERT
+  fi
+
+  if [ ! -n "$(cat $serverconfig 2>/dev/null)" ]; then
+    REALITY; DEST
   fi
 }
 
