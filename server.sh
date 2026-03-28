@@ -146,6 +146,7 @@ REALITY(){
   if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
+  RANDOMSID
   cat > $serverconfig << REALITY
 {
   "log": {
