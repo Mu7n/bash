@@ -148,6 +148,7 @@ REALITY(){
 
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
+  serversid="$(RANDOMSID)"
   cat > $serverconfig << REALITY
 {
   "log": {
@@ -209,7 +210,7 @@ REALITY(){
           "xver": 1,
           "serverNames": ["$serverdomain"],
           "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')",
-          "shortIds": ["$(RANDOMSID)"]
+          "shortIds": ["$serversid"]
         }
       },
       "sniffing": {
@@ -276,7 +277,7 @@ REALITY(){
             {
               "type": "mkcp-aes128gcm",
               "settings": {
-                "password": "$(RANDOMSID)"
+                "password": "$serversid"
               }
             }
           ]
