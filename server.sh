@@ -454,7 +454,6 @@ RCINITD(){
   if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then
     blue "开始安装。"
     apk -U upgrade && apk add alpine-sdk linux-headers nginx certbot certbot-nginx unzip tar py3-qrcode ufw
-    modprobe tcp_bbr
   fi
 
   serversystem="/etc/init.d/${servername}"
@@ -501,7 +500,6 @@ SYSTEMD(){
   if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then
     blue "开始安装。"
     apt update && apt upgrade -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw
-    modprobe tcp_bbr
   fi
 
   serversystem="/etc/systemd/system/${servername}.service"
@@ -545,15 +543,18 @@ CHECK(){
     exit 0
   fi
 
-  if grep -q "tcp_bbr" /proc/modules; then
-    echo "tcp_bbr" > /etc/modules-load.d/bbr.conf
-    if sysctl -w net.ipv4.tcp_congestion_control=bbr >/dev/null 2>&1; then
-      echo "net.ipv4.tcp_congestion_control=bbr" > /etc/sysctl.d/bbr.conf
+  if [ ! -f /etc/modules-load.d/bbr.conf ]; then
+    modprobe tcp_bbr
+    if grep -q "tcp_bbr" /proc/modules; then
+      if sysctl -w net.ipv4.tcp_congestion_control=bbr >/dev/null 2>&1; then
+        echo "net.ipv4.tcp_congestion_control=bbr" > /etc/sysctl.d/bbr.conf
+      fi
+      echo "tcp_bbr" > /etc/modules-load.d/bbr.conf
       if sysctl -w net.core.default_qdisc=fq >/dev/null 2>&1; then
         echo "net.core.default_qdisc=fq" >> /etc/sysctl.d/bbr.conf
       fi
     fi
-    sysctl -p /etc/sysctl.d/bbr.conf >/dev/null 2>&1
+    sysctl -p /etc/sysctl.d/bbr.conf
   fi
 
   if [ "$(nginx -v 2>&1 | awk -F '[.(]' '{print $2$3}')" -ge 251 ]; then
