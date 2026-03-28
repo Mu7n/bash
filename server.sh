@@ -367,7 +367,7 @@ RANDOMSID(){
   local chars="0123456789abcdef"
   local shortid=""
   while [ "${#shortid}" -lt "12" ]; do
-    randomid="${chars:$($RANDOM%${#chars}):1}"
+    randomid="${chars:$RANDOM%${#chars}:1}"
     serversid="$shortid$randomid"
   done
 }
