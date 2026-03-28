@@ -148,6 +148,7 @@ REALITY(){
 
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
+
   cat > $serverconfig << REALITY
 {
   "log": {
@@ -364,12 +365,14 @@ CERT(){
 DOMAIN(){
   readp "请输入域名：" serverdomain
   purple "域名：$serverdomain"
+
   while true; do readp "请确认域名[yes/no]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac done
 }
 
 RANDOMSID(){
   local chars="0123456789abcdef"
   local shortid=""
+
   while [ "${#shortid}" -lt "12" ]; do
     randomid="${chars:$($RANDOM%${#chars}):1}"
     serversid="$shortid$randomid"
@@ -378,12 +381,15 @@ RANDOMSID(){
 
 SUBSCRIBE(){
   if [[ ! -f "$serverconfig" || ! -n "$serverdomain" ]]; then REALITY; DEST; fi
+
   xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
   xsid="$(grep '"shortIds"' $serverconfig | awk -F '"' '{print $4}')"
   xrpk="$(grep '"path"' $serverconfig | awk -F '"' '{print $4}')"
+
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
+
   cat > ${serversubpath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&tls=true&flow=xtls-rprx-vision&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&xudp=true#vision
 vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?type=xhttp&obfs=xhttp&path=${xrpk}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=xudp#xhttp
@@ -436,10 +442,12 @@ MSUB
 
   rm -rf ${serversubpath}/xlink/*
   rm -rf ${serversubpath}/mlink/*
+
   serveruser="$(echo -n "${serversalt}": | md5sum | awk '{print $1}')"
   echo -e "$(base64 -w 0 ${serversubpath}/xray)" > ${serversubpath}/xlink/${serveruser}
   cat ${serversubpath}/mihomo > ${serversubpath}/mlink/${serveruser}
   chmod -R 555 $serversubpath
+
   subxlink="https://${serverdomain}/surl/xlink/${serveruser}"
   submlink="https://${serverdomain}/surl/mlink/${serveruser}"
   blue "\nXray\n"; purple "$subxlink\n"; $qrcmd "$subxlink"; blue "\nMihomo\n"; purple "$submlink\n"; $qrcmd "$submlink"
