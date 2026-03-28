@@ -82,6 +82,7 @@ HTTP
 
 DEST(){
   if [ ! -n "$serverdomain" ]; then REALITY; fi
+  if [ ! -n "$(cat $serverconfig 2>/dev/null)" ]; then REALITY; fi
   cat > $nginxconfig << DEST
 server {
   listen 80;
