@@ -148,7 +148,6 @@ REALITY(){
 
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
-  serversid="$(RANDOMSID)"
   cat > $serverconfig << REALITY
 {
   "log": {
@@ -372,10 +371,9 @@ RANDOMSID(){
   local chars="0123456789abcdef"
   local shortid=""
   while [ "${#shortid}" -lt "12" ]; do
-    randomid="${chars:$(($RANDOM%${#chars})):1}"
-    shortid="$shortid$randomid"
+    randomid="${chars:$($RANDOM%${#chars}):1}"
+    serversid="$shortid$randomid"
   done
-  echo "$shortid"
 }
 
 SUBSCRIBE(){
