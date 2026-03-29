@@ -208,7 +208,7 @@ REALITY(){
           "xver": 1,
           "serverNames": ["$serverdomain"],
           "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')",
-          "shortIds": ["$serversid"]
+          "shortIds": ["$(RANDOMSID)"]
         }
       },
       "sniffing": {
@@ -275,7 +275,7 @@ REALITY(){
             {
               "type": "mkcp-aes128gcm",
               "settings": {
-                "password": "$serversid"
+                "password": "$(grep '"shortIds"' $serverconfig | awk -F '"' '{print $4}')"
               }
             }
           ]
@@ -365,11 +365,12 @@ DOMAIN(){
 
 RANDOMSID(){
   local chars="0123456789abcdef"
-  local serversid=""
-  while [ "${#serversid}" -lt "12" ]; do
+  local shortid=""
+  while [ "${#shortid}" -lt "12" ]; do
     randomid="${chars:$RANDOM%${#chars}:1}"
-    serversid="$serversid$randomid"
+    shortid="$shortid$randomid"
   done
+  echo "$shortid"
 }
 
 SUBSCRIBE(){
