@@ -496,7 +496,7 @@ start_pre() {
   checkconfig || return 1
 }
 RCINITD
-    chmod +x $serversystem && $serverenable
+    chmod +x $serversystem && $serverenable && purple "Service配置完成！"
   fi
 }
 
@@ -528,7 +528,7 @@ RuntimeDirectoryMode=0755
 [Install]
 WantedBy=multi-user.target
 SYSTEMD
-    chmod 644 $serversystem && $serverenable
+    chmod 644 $serversystem && $serverenable && purple "Service配置完成！"
   fi
 }
 
