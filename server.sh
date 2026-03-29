@@ -375,6 +375,7 @@ RANDOMSID(){
 }
 
 SUBSCRIBE(){
+  if [ ! -n "$serverdomain" ]; then HTTP; DOMAIN; CERT; fi
   if [ ! -n "$(cat $serverconfig 2>/dev/null)" ]; then REALITY; DEST; fi
   xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
@@ -639,7 +640,7 @@ serversubpath="/etc/aio/subscribe"
 servercertpath="/etc/letsencrypt/live"
 serverconfig="${serverpath}/config.json"
 serverprocess="${serverpath}/${servername}"
-serverdomain="$(grep '"serverNames"' $serverconfig 2>&1 | awk -F '"' '{print $4}')"
+serverdomain="$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
 serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
 servertag="$(curl -sf "$serverapi" | grep '"tag_name"' | awk -F '"' '{print $4}')"
