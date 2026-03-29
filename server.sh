@@ -146,6 +146,7 @@ REALITY(){
   if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
+  serversid="$(RANDOMSID)"
   RANDOMSID
   cat > $serverconfig << REALITY
 {
@@ -208,7 +209,7 @@ REALITY(){
           "xver": 1,
           "serverNames": ["$serverdomain"],
           "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')",
-          "shortIds": ["$(RANDOMSID)"]
+          "shortIds": ["$serversid"]
         }
       },
       "sniffing": {
@@ -275,7 +276,7 @@ REALITY(){
             {
               "type": "mkcp-aes128gcm",
               "settings": {
-                "password": "$(grep '"shortIds"' $serverconfig | awk -F '"' '{print $4}')"
+                "password": "$serversid"
               }
             }
           ]
