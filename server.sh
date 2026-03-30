@@ -202,7 +202,7 @@ REALITY(){
           "target": 44380, // 转发 Nginx 监听进程
           "xver": 1,
           "serverNames": ["$serverdomain"],
-          "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')",
+          "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk -F ': ' '{print $2}')",
           "shortIds": ["$serversid"]
         }
       },
@@ -231,7 +231,7 @@ REALITY(){
         "xhttpSettings": {
           "host": "", // 服务端不验证 host 客户端玩法更多
           "mode": "auto", // 服务端设置 auto 客户端玩法更多
-          "path": "$(echo "$serverx25519" | grep "Password" | awk '{print $2}')"
+          "path": "$(echo "$serverx25519" | grep "Password" | awk -F ': ' '{print $2}')"
         }
       },
       "sniffing": {
