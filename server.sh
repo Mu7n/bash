@@ -349,7 +349,7 @@ REALITY(){
 #1、reality+vision 和 reality+xhttp 客户端仅使用 www.example.com 域名连接。
 #2、xhttp+tls 客户端可使用 www.example.com 或 cdn.example.com 域名连接。
 REALITY
-  service $servername restart; purple "Xray配置完成！"
+  service $servername restart; return; purple "Xray配置完成！"
 }
 
 DOWNLOAD(){
