@@ -411,7 +411,7 @@ RANDOMSID(){
     randomid="${chars:$RANDOM%${#chars}:1}"
     shortid="$shortid$randomid"
   done
-  echo "$shortid" 2>&1
+  echo "$shortid" >/dev/null
 }
 
 SUBSCRIBE(){
