@@ -423,7 +423,7 @@ SUBSCRIBE(){
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#vision
-vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xuuid}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#xhttp
+vless://${xuuid}@${xdomain}:443?type=xhttp&path=/${xuuid}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#xhttp
 vless://$(echo -n ":${xuuid}@${xdomain}:23710" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2210%22,%22downlinkCapacity%22:%22125%22,%22seed%22:%22${xsid}%22%7D&mux=true&xudp=true#mkcp
 hysteria2://${xuuid}@${xdomain}:443?sni=${xdomain}&upmbps=50&downmbps=100&alpn=h3&insecure=0#hy2
 XSUB
@@ -452,7 +452,7 @@ proxies:
     uuid: $xuuid
     network: xhttp
     xhttp-opts:
-      path: $xuuid
+      path: /$xuuid
       mode: auto
     reality-opts:
       public-key: $xrpk
@@ -470,8 +470,8 @@ proxies:
     password: $xuuid
     sni: $xdomain
     alpn: h3
-    up: "50 Mbps"
-    down: "100 Mbps"
+    upmbps: "50"
+    downmbps: "100"
     skip-cert-verify: false
 MSUB
   if [[ -f "${serversubpath}/subscribe" && -n "$(cat ${serversubpath}/subscribe)" ]]; then
