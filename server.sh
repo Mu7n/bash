@@ -155,12 +155,6 @@ REALITY(){
     "access": "${serverpath}/access.log",
     "error": "${serverpath}/error.log"
   },
-  "dns": {
-    "servers": [
-      "https+local://1.1.1.1/dns-query", // 首选 1.1.1.1 的 DoH 查询，牺牲速度但可防止 ISP 偷窥
-      "localhost"
-    ]
-  },
   "routing": {
     "domainStrategy": "AsIs",
     "rules": [
@@ -197,7 +191,7 @@ REALITY(){
         "decryption": "none",
         "fallbacks": [
           {
-            "dest": 44308  //回落 reality-xhttp 监听进程
+            "dest": 44308 // 回落 reality-xhttp 监听进程
           }
         ]
       },
@@ -205,7 +199,7 @@ REALITY(){
         "network": "raw",
         "security": "reality",
         "realitySettings": {
-          "target": 44380,  //转发 Nginx 监听进程
+          "target": 44380, // 转发 Nginx 监听进程
           "xver": 1,
           "serverNames": ["$serverdomain"],
           "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk '{print $2}')",
@@ -235,8 +229,8 @@ REALITY(){
       "streamSettings": {
         "network": "xhttp",
         "xhttpSettings": {
-          "host": "",  // 服务端不验证 host 客户端玩法更多
-          "mode": "auto",  // 服务端设置 auto 客户端玩法更多
+          "host": "", // 服务端不验证 host 客户端玩法更多
+          "mode": "auto", // 服务端设置 auto 客户端玩法更多
           "path": "$(echo "$serverx25519" | grep "Password" | awk '{print $2}')"
         }
       },
@@ -261,13 +255,11 @@ REALITY(){
       },
       "streamSettings": {
         "network": "kcp",
-        "mtu": 1350,
-        "tti": 50,
-        "uplinkCapacity": 100,
-        "downlinkCapacity": 100,
+        "uplinkCapacity": 65, // 设为实际的网络速度，当速度不够时，可以逐渐增加直到带宽的两倍左右
+        "downlinkCapacity": 125, // 客户端的 up 为发送数据的速度，而服务器端的 down 为接收数据的速度
         "congestion": true,
-        "readBufferSize": 5,
-        "writeBufferSize": 5,
+        "readBufferSize": 9,
+        "writeBufferSize": 9,
         "finalmask": {
           "udp": [
             {
@@ -286,6 +278,54 @@ REALITY(){
         "enabled": true,
         "destOverride": ["http", "tls", "quic"],
         "routeOnly": true
+      }
+    },
+    {
+      "tag": "hy2",
+      "port": 230710,
+      "protocol": "hysteria",
+      "settings": {
+        "version": 2,
+        "clients": [
+          {
+            "auth": "$serveruuid"
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "hysteria",
+        "hysteriaSettings": {
+          "version": 2,
+          "auth": "$serveruuid",
+          "udpIdleTimeout": 60,
+          "masquerade": {
+            "type": "proxy",
+            "url": "https://${serverdomain}",
+            "rewriteHost": true,
+            "insecure": false
+          }
+        },
+        "security": "tls",
+        "tlsSettings": {
+          "alpn": ["h3"],
+          "certificates": [
+            {
+              "certificateFile": "${servercertpath}/${serverdomain}/fullchain.pem",
+              "keyFile": "${servercertpath}/${serverdomain}/privkey.pem"
+            }
+          ]
+        },
+        "finalmask": {
+          "quicParams": {
+            "congestion": "force-brutal",
+            "brutalUp": "200 mbps", // 服务端的上传是客户端的下载
+            "brutalDown": "100 mbps", // 服务端的下载是客户端的上传
+            "udpHop": {
+            //"ports": "20000-30000",
+            "interval": "30"
+            }
+          }
+        }
       }
     }
   ],
@@ -386,8 +426,8 @@ SUBSCRIBE(){
   cat > ${serversubpath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&tls=true&flow=xtls-rprx-vision&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&xudp=true#vision
 vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?type=xhttp&obfs=xhttp&path=${xrpk}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=xudp#xhttp
-vless://$(echo -n ":${xuuid}@${xdomain}:10723" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22mtu%22:%221350%22,%22tti%22:%2250%22,%22uplinkCapacity%22:%2225%22,%22downlinkCapacity%22:%2225%22,%22seed%22:%22${xsid}%22%7D&mux=true&xudp=true#mkcp
-
+vless://$(echo -n ":${xuuid}@${xdomain}:10723" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2215%22,%22downlinkCapacity%22:%22100%22,%22seed%22:%22${xsid}%22%7D&mux=true&xudp=true#mkcp
+hysteria2://${xuuid}@${xdomain}:23710?insecure=30&sni=${xdest}&alpn=h3#hy2
 XSUB
   cat > ${serversubpath}/mihomo << MSUB
 proxies:
@@ -424,7 +464,18 @@ proxies:
     client-fingerprint: chrome
     udp: true
     packet-encoding: xudp
-
+  - name: "hy2"
+    type: hysteria2
+    server: $xdomain
+    port: 23710
+    password: $xuuid
+    skip-cert-verify: false
+    sni: $xdomain
+    alpn:
+      - h3
+    up: "100 Mbps"
+    down: "200 Mbps"
+    hop-interval: 30
 MSUB
   if [[ -f "${serversubpath}/subscribe" && -n "$(cat ${serversubpath}/subscribe)" ]]; then
     serversalt="$(cat ${serversubpath}/subscribe)"
