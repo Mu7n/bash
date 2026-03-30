@@ -102,7 +102,7 @@ server {
   server_name cdn$serverdomain; #修改 CDN 域名
   ssl_certificate ${servercertpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
   ssl_certificate_key ${servercertpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
-  location /$(grep '"path"' $serverconfig | awk -F '"' '{print $4}') { #与 reality-xhttp 中 path 对应
+  location $(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}') { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -121,7 +121,7 @@ server {
   server_name $serverdomain;
   ssl_certificate ${servercertpath}/${serverdomain}/fullchain.pem;
   ssl_certificate_key ${servercertpath}/${serverdomain}/privkey.pem;
-  location /$(grep '"path"' $serverconfig | awk -F '"' '{print $4}') { #与 reality-xhttp 中 path 对应
+  location $(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}') { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -147,7 +147,6 @@ REALITY(){
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
   serversid="$(RANDOMSID)"
-  RANDOMSID
   cat > $serverconfig << REALITY
 {
   "log": {
@@ -202,7 +201,7 @@ REALITY(){
           "target": 44380, // 转发 Nginx 监听进程
           "xver": 1,
           "serverNames": ["$serverdomain"],
-          "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk -F ': ' '{print $2}')",
+          "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk -F ': ' '{print $2}')", // "publicKey": "$(echo "$serverx25519" | grep "Password" | awk -F ': ' '{print $2}')"
           "shortIds": ["$serversid"]
         }
       },
@@ -220,8 +219,7 @@ REALITY(){
       "settings": {
         "clients": [
           {
-            "id": "$serveruuid",
-            "flow": ""
+            "id": "$serveruuid"
           }
         ],
         "decryption": "none"
@@ -231,7 +229,7 @@ REALITY(){
         "xhttpSettings": {
           "host": "", // 服务端不验证 host 客户端玩法更多
           "mode": "auto", // 服务端设置 auto 客户端玩法更多
-          "path": "$(echo "$serverx25519" | grep "Password" | awk -F ': ' '{print $2}')"
+          "path": "/${serveruuid}"
         }
       },
       "sniffing": {
@@ -247,8 +245,7 @@ REALITY(){
       "settings": {
         "clients": [
           {
-            "id": "$serveruuid",
-            "flow": ""
+            "id": "$serveruuid"
           }
         ],
         "decryption": "none"
@@ -411,7 +408,7 @@ RANDOMSID(){
     randomid="${chars:$RANDOM%${#chars}:1}"
     shortid="$shortid$randomid"
   done
-  echo "$shortid" >/dev/null
+  echo "$shortid"
 }
 
 SUBSCRIBE(){
@@ -420,7 +417,7 @@ SUBSCRIBE(){
   xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
   xsid="$(grep '"shortIds"' $serverconfig | awk -F '"' '{print $4}')"
-  xrpk="$(grep '"path"' $serverconfig | awk -F '"' '{print $4}')"
+  xrpk="$(grep '"publicKey"' $serverconfig | awk -F '"' '{print $4}')"
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/xray << XSUB
