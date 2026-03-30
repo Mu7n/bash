@@ -279,7 +279,7 @@ REALITY(){
     },
     {
       "tag": "hy2",
-      "port": 230710,
+      "port": 23710,
       "protocol": "hysteria",
       "settings": {
         "version": 2,
@@ -323,6 +323,11 @@ REALITY(){
             }
           }
         }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls", "quic"],
+        "routeOnly": true
       }
     }
   ],
