@@ -1,29 +1,31 @@
 #json
 ,
     {
-      "tag": "hysteria2",
-      "port": 10723,
+      "tag": "hy2",
+      "port": 230710,
       "protocol": "hysteria",
       "settings": {
         "version": 2,
         "clients": [
           {
-            "auth": "$xuuid"
+            "auth": "$serveruuid"
           }
         ]
       },
       "streamSettings": {
         "network": "hysteria",
         "hysteriaSettings": {
-          "version": 2
+          "version": 2,
+          "auth": "$serveruuid",
+          "udpIdleTimeout": 60
         },
         "security": "tls",
         "tlsSettings": {
           "alpn": ["h3"],
           "certificates": [
             {
-              "certificateFile": "${sslpath}/${serverdomain}/fullchain.pem",
-              "keyFile": "${sslpath}/${serverdomain}/privkey.pem"
+              "certificateFile": "${servercertpath}/${serverdomain}/fullchain.pem",
+              "keyFile": "${servercertpath}/${serverdomain}/privkey.pem"
             }
           ]
         },
@@ -38,7 +40,11 @@
           ],
           "quicParams": {
             "congestion": "force-brutal",
-            "brutalUp": "100mbps"
+            "brutalUp": "200 mbps", //服务端的上传是客户端的下载
+            "brutalDown": "100 mbps", //服务端的下载是客户端的上传
+            //"udpHop": {
+            //"ports": "20000-30000",
+            //"interval": "30"
           }
         }
       }
