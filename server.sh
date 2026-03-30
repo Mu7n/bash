@@ -380,7 +380,7 @@ DOWNLOAD(){
       break
     fi
   done
-  if [ -f "$serversystem" ]; then service $servername restart && purple "已重启"; fi
+  if [ -f "$serversystem" ]; then service $servername restart && purple "$servername已重启！"; fi
 }
 
 CERT(){
@@ -392,7 +392,7 @@ CERT(){
     rm -rf /etc/letsencrypt/{archive,live,renewal}
     echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
     echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconfig
-    service nginx restart && certbot --nginx --agree-tos -n -m ssl@cert.bot -d $serverdomain
+    certbot --nginx --agree-tos -n -m ssl@cert.bot -d $serverdomain
   fi
 }
 
