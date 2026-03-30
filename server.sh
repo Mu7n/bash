@@ -500,7 +500,7 @@ SSHD(){
     echo -e "PermitRootLogin yes\nPubkeyAuthentication yes\nPasswordAuthentication no\nPort $serversshd" > /etc/ssh/sshd_config.d/sshd.conf
     service ssh restart
     if [ -f /usr/lib/systemd/system/ssh.socket ]; then sed -i "s/22/$serversshd/g" /usr/lib/systemd/system/ssh.socket && systemctl restart ssh.socket; fi
-    ufw allow $serversshd; ufw allow 80/tcp; ufw allow 80/udp; ufw allow 443/tcp; ufw allow 443/udp; ufw allow 10723/tcp; ufw allow 10723/udp; ufw allow 23710/tcp; ufw allow 23710/udp; echo "y" | ufw enable >/dev/null
+    ufw allow $serversshd; ufw allow 80/tcp; ufw allow 80/udp; ufw allow 443/tcp; ufw allow 443/udp; ufw allow 23710/tcp; ufw allow 23710/udp; echo "y" | ufw enable >/dev/null
   fi
 }
 
