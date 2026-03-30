@@ -255,8 +255,8 @@ REALITY(){
       },
       "streamSettings": {
         "network": "kcp",
-        "uplinkCapacity": 65, // 设为实际的网络速度，当速度不够时，可以逐渐增加直到带宽的两倍左右
-        "downlinkCapacity": 125, // 客户端的 up 为发送数据的速度，而服务器端的 down 为接收数据的速度
+        "uplinkCapacity": 65, // 设为实际的网速，可逐渐增加直到带宽的两倍左右
+        "downlinkCapacity": 125, // up 为发送数据的速度，down 为接收数据的速度
         "congestion": true,
         "readBufferSize": 9,
         "writeBufferSize": 9,
@@ -426,8 +426,8 @@ SUBSCRIBE(){
   cat > ${serversubpath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&tls=true&flow=xtls-rprx-vision&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&xudp=true#vision
 vless://$(echo -n ":${xuuid}@${xdomain}:443" | base64 -w 0)?type=xhttp&obfs=xhttp&path=${xrpk}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome&udp=xudp#xhttp
-vless://$(echo -n ":${xuuid}@${xdomain}:10723" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2215%22,%22downlinkCapacity%22:%22100%22,%22seed%22:%22${xsid}%22%7D&mux=true&xudp=true#mkcp
-hysteria2://${xuuid}@${xdomain}:23710?insecure=30&sni=${xdest}&alpn=h3#hy2
+vless://$(echo -n ":${xuuid}@${xdomain}:10723" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2215%22,%22downlinkCapacity%22:%22125%22,%22seed%22:%22${xsid}%22%7D&mux=true&xudp=true#mkcp
+hysteria2://${xuuid}@${xdomain}:23710?sni=${xdomain}&keepalive=30&upmbps=100&downmbps=200#hy2
 XSUB
   cat > ${serversubpath}/mihomo << MSUB
 proxies:
@@ -471,11 +471,9 @@ proxies:
     password: $xuuid
     skip-cert-verify: false
     sni: $xdomain
-    alpn:
-      - h3
+    hop-interval: 30
     up: "100 Mbps"
     down: "200 Mbps"
-    hop-interval: 30
 MSUB
   if [[ -f "${serversubpath}/subscribe" && -n "$(cat ${serversubpath}/subscribe)" ]]; then
     serversalt="$(cat ${serversubpath}/subscribe)"
