@@ -598,7 +598,7 @@ CHECK(){
   fi
 
   if [ ! -f /etc/modules-load.d/bbr.conf ]; then
-    modprobe tcp_bbr
+    modprobe tcp_bbr 2>/dev/null
     if grep -q "tcp_bbr" /proc/modules; then
       if sysctl -w net.ipv4.tcp_congestion_control=bbr >/dev/null 2>&1; then
         echo "net.ipv4.tcp_congestion_control=bbr" > /etc/sysctl.d/bbr.conf
