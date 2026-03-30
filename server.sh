@@ -102,7 +102,7 @@ server {
   server_name cdn$serverdomain; #修改 CDN 域名
   ssl_certificate ${servercertpath}/${serverdomain}/fullchain.pem; #修改 CDN 域名证书
   ssl_certificate_key ${servercertpath}/${serverdomain}/privkey.pem; #修改 CDN 域名证书
-  location $(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}') { #与 reality-xhttp 中 path 对应
+  location /$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}') { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -121,7 +121,7 @@ server {
   server_name $serverdomain;
   ssl_certificate ${servercertpath}/${serverdomain}/fullchain.pem;
   ssl_certificate_key ${servercertpath}/${serverdomain}/privkey.pem;
-  location $(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}') { #与 reality-xhttp 中 path 对应
+  location /$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}') { #与 reality-xhttp 中 path 对应
     grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
     grpc_set_header Host \$host;
     grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -451,6 +451,8 @@ proxies:
     port: 443
     uuid: $xuuid
     network: xhttp
+    obfs: xhttp
+    path: /$xuuid
     xhttp-opts:
       path: /$xuuid
       mode: auto
