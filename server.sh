@@ -279,7 +279,7 @@ REALITY(){
     },
     {
       "tag": "hy2",
-      "port": 23710,
+      "port": 443,
       "protocol": "hysteria",
       "settings": {
         "version": 2,
@@ -428,8 +428,8 @@ SUBSCRIBE(){
   cat > ${serversubpath}/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#vision
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=${xuuid}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#xhttp
-vless://$(echo -n ":${xuuid}@${xdomain}:10723" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2215%22,%22downlinkCapacity%22:%22125%22,%22seed%22:%22${xsid}%22%7D&mux=true&xudp=true#mkcp
-hysteria2://${xuuid}@${xdomain}:23710?sni=${xdomain}&keepalive=30&upmbps=100&downmbps=200&alpn=h3#hy2
+vless://$(echo -n ":${xuuid}@${xdomain}:23710" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2215%22,%22downlinkCapacity%22:%22125%22,%22seed%22:%22${xsid}%22%7D&mux=true&xudp=true#mkcp
+hysteria2://${xuuid}@${xdomain}:443?sni=${xdomain}&keepalive=30&upmbps=100&downmbps=200&alpn=h3&insecure=0#hy2
 XSUB
   cat > ${serversubpath}/mihomo << MSUB
 proxies:
@@ -470,7 +470,7 @@ proxies:
   - name: "hy2"
     type: hysteria2
     server: $xdomain
-    port: 23710
+    port: 443
     password: $xuuid
     sni: $xdomain
     alpn: h3
