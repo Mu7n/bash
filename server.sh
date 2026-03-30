@@ -201,7 +201,8 @@ REALITY(){
           "target": 44380, // 转发 Nginx 监听进程
           "xver": 1,
           "serverNames": ["$serverdomain"],
-          "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk -F ': ' '{print $2}')", // "publicKey": "$(echo "$serverx25519" | grep "Password" | awk -F ': ' '{print $2}')"
+          "privateKey": "$(echo "$serverx25519" | grep "PrivateKey" | awk -F ': ' '{print $2}')",
+          "publicKey": "$(echo "$serverx25519" | grep "Password" | awk -F ': ' '{print $2}')",
           "shortIds": ["$serversid"]
         }
       },
