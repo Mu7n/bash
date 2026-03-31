@@ -431,14 +431,14 @@ SUBSCRIBE(){
   xsid="$(grep '"shortIds"' $serverconfig | awk -F '"' '{print $4}')"
   xrpk="$(grep '"publicKey"' $serverconfig | awk -F '"' '{print $4}')"
   cat > ${serversubpath}/local/xray << XSUB
-vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#VISION-${serveruser}
-vless://${xuuid}@${xdomain}:443?type=xhttp&path=/${xuuid}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#XHTTP-${serveruser}
-vless://$(echo -n ":${xuuid}@${xdomain}:23710" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2210%22,%22downlinkCapacity%22:%22125%22,%22seed%22:%22${xsid}%22%7D&mux=true&xudp=true#MKCP-${serveruser}
-hysteria2://${xuuid}@${xdomain}:443?sni=${xdomain}&alpn=h3&insecure=0#HYSTERIA-${serveruser}
+vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#vision-${serveruser}
+vless://${xuuid}@${xdomain}:443?type=xhttp&path=/${xuuid}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#xhttp-${serveruser}
+vless://$(echo -n ":${xuuid}@${xdomain}:23710" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2210%22,%22downlinkCapacity%22:%22125%22,%22seed%22:%22${xsid}%22%7D&mux=true&xudp=true#mkcp-${serveruser}
+hysteria2://${xuuid}@${xdomain}:443?sni=${xdomain}&alpn=h3&insecure=0#hy2-${serveruser}
 XSUB
   cat > ${serversubpath}/local/mihomo << MSUB
 proxies:
-  - name: "VISION-${serveruser}"
+  - name: "vision-${serveruser}"
     type: vless
     server: $xdomain
     port: 443
@@ -454,7 +454,7 @@ proxies:
     client-fingerprint: chrome
     udp: true
     packet-encoding: xudp
-  - name: "XHTTP-${serveruser}"
+  - name: "xhttp-${serveruser}"
     type: vless
     server: $xdomain
     port: 443
@@ -474,7 +474,7 @@ proxies:
     client-fingerprint: chrome
     udp: true
     packet-encoding: xudp
-  - name: "HYSTERIA-${serveruser}"
+  - name: "hy2-${serveruser}"
     type: hysteria2
     server: $xdomain
     port: 443
