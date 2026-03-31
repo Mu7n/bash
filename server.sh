@@ -241,7 +241,7 @@ REALITY(){
     },
     {
       "tag": "mkcp",
-      "port": 10723,
+      "port": 23710,
       "protocol": "vless",
       "settings": {
         "clients": [
