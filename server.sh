@@ -381,7 +381,7 @@ DOWNLOAD(){
       break
     fi
   done
-  if [ -f "$serversystem" ]; then service $servername restart && purple "$servername已重启！"; fi
+  if [ -f "$serversystem" ]; then service $servername restart && return && purple "$servername已重启！"; fi
 }
 
 CERT(){
@@ -420,11 +420,11 @@ SUBSCRIBE(){
   if [[ -f "${serversubpath}/${serveruser}" && -n "$(cat ${serversubpath}/${serveruser})" ]]; then
     serversalt="$(cat ${serversubpath}/${serveruser})"
   else
-    readp "请输入salt：" serversalt
-    echo "$serversalt" > ${serversubpath}/${serveruser}
     mkdir -p -m 555 ${serversubpath}/local
     mkdir -p -m 555 ${serversubpath}/xlink
     mkdir -p -m 555 ${serversubpath}/mlink
+    readp "请输入salt：" serversalt
+    echo "$serversalt" > ${serversubpath}/${serveruser}
   fi
   xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
