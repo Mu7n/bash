@@ -6,7 +6,7 @@
 #iptables -A INPUT -p tcp --dport 端口 -j ACCEPT
 #ps -ef | grep 进程 | grep -v grep | awk '{print $2}'；查找进程ID
 #awk -F '"' '{print $4}' | cut -c 2-；以"为分隔号；-c 2显示第二个字符；-c 2-从第二个字符开始显示
-#awk -F '.' 'NR==1 {print $4}'；以.为分隔号；打印第一行第四列
+#awk -F '.' 'NR==1 {print $NF}'；以.为分隔号；打印第一行第四列；$NF打印最后一列
 #awk -F '[. (]' '{print $2$3}'；分别以.空格(为分隔号；$2$3无分隔号；打印23；$2,$3；打印2 3；$2"|"$3；打印2|3
 #awk中/ /是正则表达式；^表示字符串中开始的位置；d/-分别是权限中开始字符
 #ls -l /目录 | awk '/^d/ {print $NF}'；打印/目录下的子目录
