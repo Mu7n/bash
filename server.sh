@@ -420,15 +420,16 @@ SUBSCRIBE(){
   xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
   xsid="$(grep '"shortIds"' $serverconfig | awk -F '"' '{print $4}')"
   xrpk="$(grep '"publicKey"' $serverconfig | awk -F '"' '{print $4}')"
+  mkdir -p -m 555 ${serversubpath}/local
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
-  cat > ${serversubpath}/xray << XSUB
+  cat > ${serversubpath}/local/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#vision
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=/${xuuid}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#xhttp
 vless://$(echo -n ":${xuuid}@${xdomain}:23710" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2210%22,%22downlinkCapacity%22:%22125%22,%22seed%22:%22${xsid}%22%7D&mux=true&xudp=true#mkcp
 hysteria2://${xuuid}@${xdomain}:443?sni=${xdomain}&alpn=h3&insecure=0#hy2
 XSUB
-  cat > ${serversubpath}/mihomo << MSUB
+  cat > ${serversubpath}/local/mihomo << MSUB
 proxies:
   - name: "vision"
     type: vless
@@ -475,20 +476,23 @@ proxies:
     alpn: h3
     skip-cert-verify: false
 MSUB
-  if [[ -f "${serversubpath}/subscribe" && -n "$(cat ${serversubpath}/subscribe)" ]]; then
-    serversalt="$(cat ${serversubpath}/subscribe)"
+  if [ -z "$serveruser" ]; then
+    readp "请输入用户名：" serveruser
+  fi
+  if [[ -f "${serversubpath}/${serveruser}" && -n "$(cat ${serversubpath}/${serveruser})" ]]; then
+    serversalt="$(cat ${serversubpath}/${serveruser})"
   else
-    readp "请输入salt值：" serversalt
-    echo "$serversalt" > ${serversubpath}/subscribe
+    readp "请输入salt：" serversalt
+    echo "$serversalt" > ${serversubpath}/${serveruser}
   fi
   rm -rf ${serversubpath}/xlink/*
   rm -rf ${serversubpath}/mlink/*
-  serveruser="$(echo -n "${serversalt}": | md5sum | awk '{print $1}')"
-  echo -e "$(base64 -w 0 ${serversubpath}/xray)" > ${serversubpath}/xlink/${serveruser}
-  cat ${serversubpath}/mihomo > ${serversubpath}/mlink/${serveruser}
+  serverlocation="$(echo -n "${serversalt}": | md5sum | awk '{print $1}')"
+  echo -e "$(base64 -w 0 ${serversubpath}/local/xray)" > ${serversubpath}/xlink/${serverlocation}
+  cat ${serversubpath}/local/mihomo > ${serversubpath}/mlink/${serverlocation}
   chmod -R 555 $serversubpath
-  subxlink="https://${serverdomain}/surl/xlink/${serveruser}"
-  submlink="https://${serverdomain}/surl/mlink/${serveruser}"
+  subxlink="https://${serverdomain}/surl/xlink/${serverlocation}"
+  submlink="https://${serverdomain}/surl/mlink/${serverlocation}"
   blue "\nXray\n"; purple "$subxlink\n"; $qrcmd "$subxlink"; blue "\nMihomo\n"; purple "$submlink\n"; $qrcmd "$submlink"
 }
 
@@ -689,6 +693,7 @@ serversubpath="/etc/aio/subscribe"
 servercertpath="/etc/letsencrypt/live"
 serverconfig="${serverpath}/config.json"
 serverprocess="${serverpath}/${servername}"
+serveruser="$(ls -l $serversubpath 2>&1 | awk '/^-/ {print $NF}')"
 serverdomain="$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
 serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
