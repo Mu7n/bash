@@ -538,7 +538,7 @@ command_args="run -confdir \$confdir"
 required_files="\$confdir"
 depend() {
   need net
-  want dns ntp-client
+  want dns
   after firewall
 }
 checkconfig() {
