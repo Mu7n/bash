@@ -416,13 +416,20 @@ RANDOMSID(){
 SUBSCRIBE(){
   if [ ! -n "$serverdomain" ]; then HTTP; DOMAIN; CERT; fi
   if [ ! -n "$(cat $serverconfig 2>/dev/null)" ]; then REALITY; DEST; fi
+  if [ -z "$serveruser" ]; then readp "请输入用户名：" serveruser; fi
+  if [[ -f "${serversubpath}/${serveruser}" && -n "$(cat ${serversubpath}/${serveruser})" ]]; then
+    serversalt="$(cat ${serversubpath}/${serveruser})"
+  else
+    readp "请输入salt：" serversalt
+    echo "$serversalt" > ${serversubpath}/${serveruser}
+    mkdir -p -m 555 ${serversubpath}/local
+    mkdir -p -m 555 ${serversubpath}/xlink
+    mkdir -p -m 555 ${serversubpath}/mlink
+  fi
   xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
   xsid="$(grep '"shortIds"' $serverconfig | awk -F '"' '{print $4}')"
   xrpk="$(grep '"publicKey"' $serverconfig | awk -F '"' '{print $4}')"
-  mkdir -p -m 555 ${serversubpath}/local
-  mkdir -p -m 555 ${serversubpath}/xlink
-  mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/local/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#VISION-${serveruser}
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=/${xuuid}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#XHTTP-${serveruser}
@@ -476,15 +483,6 @@ proxies:
     alpn: h3
     skip-cert-verify: false
 MSUB
-  if [ -z "$serveruser" ]; then
-    readp "请输入用户名：" serveruser
-  fi
-  if [[ -f "${serversubpath}/${serveruser}" && -n "$(cat ${serversubpath}/${serveruser})" ]]; then
-    serversalt="$(cat ${serversubpath}/${serveruser})"
-  else
-    readp "请输入salt：" serversalt
-    echo "$serversalt" > ${serversubpath}/${serveruser}
-  fi
   rm -rf ${serversubpath}/xlink/*
   rm -rf ${serversubpath}/mlink/*
   serverlocation="$(echo -n "${serversalt}": | md5sum | awk '{print $1}')"
