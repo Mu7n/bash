@@ -424,14 +424,14 @@ SUBSCRIBE(){
   mkdir -p -m 555 ${serversubpath}/xlink
   mkdir -p -m 555 ${serversubpath}/mlink
   cat > ${serversubpath}/local/xray << XSUB
-vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#vision
-vless://${xuuid}@${xdomain}:443?type=xhttp&path=/${xuuid}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#xhttp
-vless://$(echo -n ":${xuuid}@${xdomain}:23710" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2210%22,%22downlinkCapacity%22:%22125%22,%22seed%22:%22${xsid}%22%7D&mux=true&xudp=true#mkcp
-hysteria2://${xuuid}@${xdomain}:443?sni=${xdomain}&alpn=h3&insecure=0#hy2
+vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#VISION-${serveruser}
+vless://${xuuid}@${xdomain}:443?type=xhttp&path=/${xuuid}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#XHTTP-${serveruser}
+vless://$(echo -n ":${xuuid}@${xdomain}:23710" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2210%22,%22downlinkCapacity%22:%22125%22,%22seed%22:%22${xsid}%22%7D&mux=true&xudp=true#MKCP-${serveruser}
+hysteria2://${xuuid}@${xdomain}:443?sni=${xdomain}&alpn=h3&insecure=0#HYSTERIA-${serveruser}
 XSUB
   cat > ${serversubpath}/local/mihomo << MSUB
 proxies:
-  - name: "vision"
+  - name: "VISION-${serveruser}"
     type: vless
     server: $xdomain
     port: 443
@@ -447,7 +447,7 @@ proxies:
     client-fingerprint: chrome
     udp: true
     packet-encoding: xudp
-  - name: "xhttp"
+  - name: "XHTTP-${serveruser}"
     type: vless
     server: $xdomain
     port: 443
@@ -467,7 +467,7 @@ proxies:
     client-fingerprint: chrome
     udp: true
     packet-encoding: xudp
-  - name: "hy2"
+  - name: "HYSTERIA-${serveruser}"
     type: hysteria2
     server: $xdomain
     port: 443
@@ -491,8 +491,8 @@ MSUB
   echo -e "$(base64 -w 0 ${serversubpath}/local/xray)" > ${serversubpath}/xlink/${serverlocation}
   cat ${serversubpath}/local/mihomo > ${serversubpath}/mlink/${serverlocation}
   chmod -R 555 $serversubpath
-  subxlink="https://${serverdomain}/surl/xlink/${serverlocation}"
-  submlink="https://${serverdomain}/surl/mlink/${serverlocation}"
+  subxlink="https://${serverdomain}/surl/xlink/${serverlocation}"#$serveruser
+  submlink="https://${serverdomain}/surl/mlink/${serverlocation}"#$serveruser
   blue "\nXray\n"; purple "$subxlink\n"; $qrcmd "$subxlink"; blue "\nMihomo\n"; purple "$submlink\n"; $qrcmd "$submlink"
 }
 
