@@ -150,7 +150,7 @@ REALITY(){
   cat > $serverconfig << REALITY
 {
   "log": {
-    "loglevel": "warning",
+    "loglevel": "error",
     "access": "${serverpath}/access.log",
     "error": "${serverpath}/error.log"
   },
