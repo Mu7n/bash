@@ -378,6 +378,7 @@ respawn_period=600
 pidfile="/run/\${RC_SVCNAME}.pid"
 rc_ulimit="-u 10240 -n 102400"
 capabilities="^cap_net_bind_service,^cap_net_admin,^cap_net_raw"
+extra_commands="checkconfig"
 confdir=${confdir:-"$serverpath"}
 command="$serverprocess"
 command_args="run -confdir \$confdir"
@@ -389,6 +390,10 @@ depend() {
 }
 start_pre() {
   \$command \$command_args -test
+}
+checkconfig() {
+	start_pre
+	eend $?
 }
 RCINITD
     chmod +x $serversystem && $serverenable && purple "Service配置完成！"
