@@ -256,8 +256,8 @@ REALITY(){
         "uplinkCapacity": 65, // 设为实际的网速，可逐渐增加直到带宽的两倍左右
         "downlinkCapacity": 125, // up 为发送数据的速度，down 为接收数据的速度
         "congestion": true,
-        "readBufferSize": 10,
-        "writeBufferSize": 10,
+        "readBufferSize": 5,
+        "writeBufferSize": 5,
         "finalmask": {
           "udp": [
             {
@@ -316,7 +316,7 @@ REALITY(){
         "finalmask": {
           "quicParams": {
             "congestion": "bbr",
-            "brutalUp": "200 mbps" // 服务端的上传是客户端的下载，服务端的下载是客户端的上传
+            "brutalUp": "500 mbps" // 服务端的上传是客户端的下载，服务端的下载是客户端的上传
           }
         }
       },
