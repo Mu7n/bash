@@ -393,7 +393,7 @@ start_pre() {
 }
 checkconfig() {
 	start_pre
-	eend $?
+	eend \$?
 }
 RCINITD
     chmod +x $serversystem && $serverenable && purple "Service配置完成！"
