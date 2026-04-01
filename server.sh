@@ -601,16 +601,14 @@ CHECK(){
     nginxhttp="ssl http2;"
   fi
 
-  if [ ! -f /etc/modules-load.d/bbr.conf ]; then
-    modprobe tcp_bbr 2>/dev/null
-    grep -q "tcp_bbr" /proc/modules
+  if grep -q "tcp_bbr" /proc/modules; then
+    echo "tcp_bbr" > /etc/modules-load.d/bbr.conf
     if sysctl -w net.ipv4.tcp_congestion_control=bbr >/dev/null 2>&1; then
       echo "net.ipv4.tcp_congestion_control=bbr" > /etc/sysctl.d/bbr.conf
     fi
     if sysctl -w net.core.default_qdisc=fq >/dev/null 2>&1; then
       echo "net.core.default_qdisc=fq" >> /etc/sysctl.d/bbr.conf
     fi
-    echo "tcp_bbr" > /etc/modules-load.d/bbr.conf
     sysctl -p /etc/sysctl.d/bbr.conf
   fi
 
