@@ -253,11 +253,11 @@ REALITY(){
       },
       "streamSettings": {
         "network": "kcp",
-        "uplinkCapacity": 65, // 设为实际的网速，可逐渐增加直到带宽的两倍左右
+        "uplinkCapacity": 25, // 设为实际的网速，可逐渐增加直到带宽的两倍左右
         "downlinkCapacity": 125, // up 为发送数据的速度，down 为接收数据的速度
         "congestion": true,
-        "readBufferSize": 9,
-        "writeBufferSize": 9,
+        "readBufferSize": 10,
+        "writeBufferSize": 10,
         "finalmask": {
           "udp": [
             {
@@ -315,9 +315,8 @@ REALITY(){
         },
         "finalmask": {
           "quicParams": {
-            "congestion": "force-brutal",
-            "brutalUp": "200 mbps", // 服务端的上传是客户端的下载
-            "brutalDown": "100 mbps" // 服务端的下载是客户端的上传
+            "congestion": "brutal",
+            "brutalUp": "200 mbps" // 服务端的上传是客户端的下载，服务端的下载是客户端的上传
           }
         }
       },
