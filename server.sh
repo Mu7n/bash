@@ -253,7 +253,7 @@ REALITY(){
       },
       "streamSettings": {
         "network": "kcp",
-        "uplinkCapacity": 25, // 设为实际的网速，可逐渐增加直到带宽的两倍左右
+        "uplinkCapacity": 65, // 设为实际的网速，可逐渐增加直到带宽的两倍左右
         "downlinkCapacity": 125, // up 为发送数据的速度，down 为接收数据的速度
         "congestion": true,
         "readBufferSize": 10,
@@ -315,7 +315,7 @@ REALITY(){
         },
         "finalmask": {
           "quicParams": {
-            "congestion": "brutal",
+            "congestion": "bbr",
             "brutalUp": "200 mbps" // 服务端的上传是客户端的下载，服务端的下载是客户端的上传
           }
         }
@@ -457,7 +457,6 @@ DOWNLOAD(){
       break
     fi
   done
-  if [ -f "$serversystem" ]; then service $servername restart && purple "$servername已重启！"; fi
 }
 
 CERT(){
