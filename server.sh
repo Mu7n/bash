@@ -387,9 +387,6 @@ depend() {
   want dns
   after firewall
 }
-start_pre() {
-  \$command \$command_args -test
-}
 RCINITD
     chmod +x $serversystem && $serverenable && purple "Service配置完成！"
   fi
