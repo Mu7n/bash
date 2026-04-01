@@ -352,6 +352,88 @@ REALITY
   service $servername restart; purple "Xray配置完成！"
 }
 
+RCINITD(){
+  serversystem="/etc/init.d/${servername}"
+  serverenable="rc-update add $servername"
+  nginxpid="/run/nginx/nginx.pid"
+  nginxconfig="/etc/nginx/http.d/default.conf"
+  qrcmd="qr --ascii"
+
+  if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then
+    blue "开始安装。"
+    apk update && apk upgrade && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw
+  fi
+
+  sleep 1
+
+  if [ ! -f "$serversystem" ]; then
+    cat > $serversystem << RCINITD
+#!/sbin/openrc-run
+name="$servername"
+description="$servername Service"
+supervisor=supervise-daemon
+respawn_delay=5
+respawn_max=2
+respawn_period=600
+pidfile="/run/\${RC_SVCNAME}.pid"
+rc_ulimit="-u 10240 -n 102400"
+capabilities="^cap_net_bind_service,^cap_net_admin,^cap_net_raw"
+extra_commands="checkconfig"
+confdir=${confdir:-"$serverpath"}
+command="$serverprocess"
+command_args="run -confdir \$confdir"
+required_files="\$confdir"
+depend() {
+  need net
+  want dns
+  after firewall
+}
+checkconfig() {
+  \$command \$command_args -test
+  eend \$?
+}
+start_pre() {
+  checkconfig || return 1
+}
+RCINITD
+    chmod +x $serversystem && $serverenable && purple "Service配置完成！"
+  fi
+}
+
+SYSTEMD(){
+  serversystem="/etc/systemd/system/${servername}.service"
+  serverenable="systemctl enable $servername"
+  nginxpid="/run/nginx.pid"
+  nginxconfig="/etc/nginx/sites-available/default"
+  qrcmd="qrencode -m 1 -t UTF8i"
+
+  if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then
+    blue "开始安装。"
+    apt update && apt upgrade && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw
+  fi
+
+  sleep 1
+
+  if [ ! -f "$serversystem" ]; then
+    cat > $serversystem << SYSTEMD
+[Unit]
+Description=$servername Service
+After=network.target nss-lookup.target
+[Service]
+ExecStart=$serverprocess run -confdir $serverpath
+Restart=on-failure
+RestartPreventExitStatus=23
+LimitNPROC=10240
+LimitNOFILE=102400
+RuntimeDirectory=$servername
+RuntimeDirectoryMode=0755
+[Install]
+WantedBy=multi-user.target
+SYSTEMD
+    chmod 644 $serversystem && $serverenable && purple "Service配置完成！"
+  fi
+}
+
 DOWNLOAD(){
   while true; do
     while true; do
@@ -504,84 +586,6 @@ SSHD(){
   fi
 }
 
-RCINITD(){
-  if ! type "nginx" "certbot" "unzip" "tar" "qr" "ufw" >/dev/null 2>&1; then
-    blue "开始安装。"
-    apk update && apk upgrade && apk add nginx certbot certbot-nginx unzip tar py3-qrcode ufw
-  fi
-
-  serversystem="/etc/init.d/${servername}"
-  serverenable="rc-update add $servername"
-  nginxpid="/run/nginx/nginx.pid"
-  nginxconfig="/etc/nginx/http.d/default.conf"
-  qrcmd="qr --ascii"
-
-  if [ ! -f "$serversystem" ]; then
-    cat > $serversystem << RCINITD
-#!/sbin/openrc-run
-name="$servername"
-description="$servername Service"
-supervisor=supervise-daemon
-respawn_delay=5
-respawn_max=2
-respawn_period=600
-pidfile="/run/\${RC_SVCNAME}.pid"
-rc_ulimit="-u 10240 -n 102400"
-capabilities="^cap_net_bind_service,^cap_net_admin,^cap_net_raw"
-extra_commands="checkconfig"
-confdir=${confdir:-"$serverpath"}
-command="$serverprocess"
-command_args="run -confdir \$confdir"
-required_files="\$confdir"
-depend() {
-  need net
-  want dns
-  after firewall
-}
-checkconfig() {
-  \$command \$command_args -test
-  eend \$?
-}
-start_pre() {
-  checkconfig || return 1
-}
-RCINITD
-    chmod +x $serversystem && $serverenable && purple "Service配置完成！"
-  fi
-}
-
-SYSTEMD(){
-  if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then
-    blue "开始安装。"
-    apt update && apt upgrade && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw
-  fi
-
-  serversystem="/etc/systemd/system/${servername}.service"
-  serverenable="systemctl enable $servername"
-  nginxpid="/run/nginx.pid"
-  nginxconfig="/etc/nginx/sites-available/default"
-  qrcmd="qrencode -m 1 -t UTF8i"
-
-  if [ ! -f "$serversystem" ]; then
-    cat > $serversystem << SYSTEMD
-[Unit]
-Description=$servername Service
-After=network.target nss-lookup.target
-[Service]
-ExecStart=$serverprocess run -confdir $serverpath
-Restart=on-failure
-RestartPreventExitStatus=23
-LimitNPROC=10240
-LimitNOFILE=102400
-RuntimeDirectory=$servername
-RuntimeDirectoryMode=0755
-[Install]
-WantedBy=multi-user.target
-SYSTEMD
-    chmod 644 $serversystem && $serverenable && purple "Service配置完成！"
-  fi
-}
-
 CHECK(){
   if { [ -f "/etc/issue" ] && grep -qi "Alpine" /etc/issue; } || { [ -f "/etc/os-release" ] && grep -qi "ID=alpine" /etc/os-release; }; then
     release="alpine"
@@ -597,25 +601,23 @@ CHECK(){
     exit 0
   fi
 
+  if [ "$(nginx -v 2>&1 | awk -F '[.(]' '{print $2$3}')" -ge 251 ]; then
+    nginxhttp="ssl;http2 on;"
+  else
+    nginxhttp="ssl http2;"
+  fi
+
   if [ ! -f /etc/modules-load.d/bbr.conf ]; then
     modprobe tcp_bbr 2>/dev/null
     grep -q "tcp_bbr" /proc/modules
     if sysctl -w net.ipv4.tcp_congestion_control=bbr >/dev/null 2>&1; then
       echo "net.ipv4.tcp_congestion_control=bbr" > /etc/sysctl.d/bbr.conf
-    else
-      echo "net.ipv4.tcp_congestion_control=cubic" > /etc/sysctl.d/bbr.conf
     fi
     if sysctl -w net.core.default_qdisc=fq >/dev/null 2>&1; then
       echo "net.core.default_qdisc=fq" >> /etc/sysctl.d/bbr.conf
     fi
     echo "tcp_bbr" > /etc/modules-load.d/bbr.conf
     sysctl -p /etc/sysctl.d/bbr.conf
-  fi
-
-  if [ "$(nginx -v 2>&1 | awk -F '[.(]' '{print $2$3}')" -ge 251 ]; then
-    nginxhttp="ssl;http2 on;"
-  else
-    nginxhttp="ssl http2;"
   fi
 
   if [ ! -n "$serverdomain" ]; then
@@ -653,7 +655,7 @@ Xray(){
     purple ""
     readp "请输入选项：" option
     case "$option" in
-      1) DOWNLOAD; return;;
+      1) DOWNLOAD; REALITY; DEST; return;;
       2) SUBSCRIBE; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
