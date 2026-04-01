@@ -602,14 +602,16 @@ CHECK(){
   fi
 
   if grep -q "tcp_bbr" /proc/modules; then
-    echo "tcp_bbr" > /etc/modules-load.d/bbr.conf
-    if sysctl -w net.ipv4.tcp_congestion_control=bbr >/dev/null 2>&1; then
-      echo "net.ipv4.tcp_congestion_control=bbr" > /etc/sysctl.d/bbr.conf
+    if [ ! -f /etc/modules-load.d/bbr.conf ]; then
+      echo "tcp_bbr" > /etc/modules-load.d/bbr.conf
+      if sysctl -w net.ipv4.tcp_congestion_control=bbr >/dev/null 2>&1; then
+        echo "net.ipv4.tcp_congestion_control=bbr" > /etc/sysctl.d/bbr.conf
+      fi
+      if sysctl -w net.core.default_qdisc=fq >/dev/null 2>&1; then
+        echo "net.core.default_qdisc=fq" >> /etc/sysctl.d/bbr.conf
+      fi
+      sysctl -p /etc/sysctl.d/bbr.conf
     fi
-    if sysctl -w net.core.default_qdisc=fq >/dev/null 2>&1; then
-      echo "net.core.default_qdisc=fq" >> /etc/sysctl.d/bbr.conf
-    fi
-    sysctl -p /etc/sysctl.d/bbr.conf
   fi
 
   if [ ! -n "$serverdomain" ]; then
