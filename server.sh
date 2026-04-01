@@ -389,7 +389,6 @@ depend() {
 }
 start_pre() {
   \$command \$command_args -test
-	eend \$?
 }
 RCINITD
     chmod +x $serversystem && $serverenable && purple "Service配置完成！"
