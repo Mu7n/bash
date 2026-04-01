@@ -378,7 +378,6 @@ respawn_period=600
 pidfile="/run/\${RC_SVCNAME}.pid"
 rc_ulimit="-u 10240 -n 102400"
 capabilities="^cap_net_bind_service,^cap_net_admin,^cap_net_raw"
-extra_commands="checkconfig"
 confdir=${confdir:-"$serverpath"}
 command="$serverprocess"
 command_args="run -confdir \$confdir"
@@ -387,13 +386,6 @@ depend() {
   need net
   want dns
   after firewall
-}
-checkconfig() {
-  \$command \$command_args -test
-  eend \$?
-}
-start_pre() {
-  checkconfig || return 1
 }
 RCINITD
     chmod +x $serversystem && $serverenable && purple "Service配置完成！"
@@ -462,7 +454,7 @@ DOWNLOAD(){
       break
     fi
   done
-  if [ -f "$serversystem" ]; then service $servername restart && break && purple "$servername已重启！"; fi
+  if [ -f "$serversystem" ]; then service $servername restart && purple "$servername已重启！"; fi
 }
 
 CERT(){
