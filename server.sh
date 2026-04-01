@@ -462,7 +462,7 @@ DOWNLOAD(){
       break
     fi
   done
-  if [ -f "$serversystem" ]; then service $servername restart && echo -e '\003' && purple "$servername已重启！"; fi
+  if [ -f "$serversystem" ]; then service $servername restart && break && purple "$servername已重启！"; fi
 }
 
 CERT(){
