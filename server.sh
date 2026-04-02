@@ -534,7 +534,6 @@ proxies:
     uuid: $xuuid
     network: xhttp
     obfs: xhttp
-    path: /$xuuid
     xhttp-opts:
       path: /$xuuid
       mode: auto
