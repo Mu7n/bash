@@ -162,11 +162,7 @@ REALITY(){
         "outboundTag": "block"
       },
       {
-        "domain": ["geosite:cn"],
-        "outboundTag": "direct"
-      },
-      {
-        "ip": ["geoip:private", "geoip:cn", "223.5.5.5"],
+        "ip": ["geoip:private", "geoip:cn"],
         "outboundTag": "direct"
       },
       {
