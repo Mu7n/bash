@@ -312,7 +312,7 @@ REALITY(){
         "finalmask": {
           "quicParams": {
             "congestion": "brutal",
-            "brutalDown": "50 mbps", // 服务端的下载是客户端的上传
+            "brutalDown": "30 mbps", // 服务端的下载是客户端的上传
             "brutalUp": "150 mbps" // 服务端的上传是客户端的下载
           }
         }
