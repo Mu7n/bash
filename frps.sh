@@ -23,8 +23,6 @@ sh_frp(){
 bindAddr = "0.0.0.0"
 bindPort = 60443
 kcpBindPort = 60443
-vhostHTTPPort = 60443
-vhostHTTPSPort = 60443
 
 auth.method = "token"
 auth.token = "$token_sh"
