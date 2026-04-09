@@ -23,16 +23,11 @@ FRPS(){
 bindAddr = "0.0.0.0"
 bindPort = 60443
 kcpBindPort = 60443
-subDomainHost = "$domain_sh"
+subDomainHost = "$serverdomain"
 auth.method = "token"
-auth.token = "$token_sh"
+auth.token = "$servertoken"
 transport.tcpMux = true
 transport.tls.force = true
-allowPorts = [
-  { single = 3000 },
-  { single = 16601 },
-  { start = 20000, end = 30000 }
-]
 TOML
 }
 
