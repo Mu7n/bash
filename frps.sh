@@ -18,32 +18,58 @@ path_sh="/etc/aio/${name_sh}"
 grep_sh="$(ps -ef | grep $name_sh | grep -v grep | awk '{print $8}')"
 domain_sh="$(ls -l /etc/letsencrypt/live | awk '/^d/ {print $NF}')"
 
-sh_frp(){
-  cat > ${path_sh}/config.toml << TOML
+FRPS(){
+  cat > ${serverpath}/${servername}.toml << TOML
 bindAddr = "0.0.0.0"
 bindPort = 60443
 kcpBindPort = 60443
-
+subDomainHost = "$domain_sh"
 auth.method = "token"
 auth.token = "$token_sh"
-
-subDomainHost = "$domain_sh"
-
-transport.maxPoolCount = 10
-transport.tcpKeepalive = 7200
 transport.tcpMux = true
-transport.tcpMuxKeepaliveInterval = 60
-transport.heartbeatTimeout = 90
-
+transport.tls.force = true
 allowPorts = [
   { single = 3000 },
   { single = 16601 },
-  { start = 10000, end = 60000 }
+  { start = 20000, end = 30000 }
 ]
+TOML
+}
 
-log.to = "${path_sh}/${name_sh}.log"
-log.level = "info"
-log.maxDays = 3
+FRPC(){
+  cat > ${serverpath}/${servername}.toml << TOML
+bindAddr = "$serverip"
+bindPort = 60443
+kcpBindPort = 60443
+subDomainHost = "$serverdomain"
+auth.method = "token"
+auth.token = "$servertoken"
+transport.tcpMux = true
+transport.tls.force = true
+[[visitors]]
+name = "stcp-visitor"
+type = "stcp"
+serverName = "$serveruser"
+secretKey = "$serverpass"
+bindPort = -1
+[visitors.plugin]
+type = "virtual_net"
+destinationIP = "198.11.4.0"
+[[visitors]]
+name = "xtcp-visitor"
+type = "xtcp"
+serverUser = "user"
+serverName = "$serveruser"
+secretKey = "$serverpass"
+bindAddr = "127.0.0.1"
+bindPort = 60606
+keepTunnelOpen = true
+maxRetriesAnHour = 9
+minRetryInterval = 90
+fallbackTo = "stcp_visitor"
+fallbackTimeoutMs = 900
+[visitors.natTraversal]
+disableAssistedAddrs = true
 TOML
 }
 
@@ -53,10 +79,10 @@ sh_file(){
   while true; do if [ -s ${path_sh}/${name_sh} ]; then rm -rf ${file_sh} frp_${tag_sh}_linux_${arch_sh}; ln -sf ${path_sh}/${name_sh} /usr/local/bin; break; else blue "$url_sh，正在下载。"; curl -OL $url_sh && tar xzvf $file_sh && mv -f frp_${tag_sh}_linux_${arch_sh}/${name_sh} ${path_sh} || sleep 5; tag_sh=""; tag_sh="$(echo "$api_sh" | grep '"tag_name"' | awk -F '"' '{print $4}')"; url_sh="${link_sh}/v${tag_sh}/${file_sh}"; fi; done
 }
 
-sh_service(){
-  cat > /etc/systemd/system/${name_sh}.service << FRP
+SYSTEMD(){
+  cat > /etc/systemd/system/${servername}.service << FRP
 [Unit]
-Description=$name_sh Service
+Description=$servername Service
 After=network.target syslog.target
 Wants=network.target
 
@@ -64,7 +90,7 @@ Wants=network.target
 Type=simple
 Restart=on-failure
 RestartSec=5s
-ExecStart=${path_sh}/${name_sh} -c ${path_sh}/config.toml
+ExecStart=${serverpath}/${servername} -c ${serverpath}/${servername}.toml
 
 [Install]
 WantedBy=multi-user.target
@@ -73,12 +99,12 @@ FRP
   chmod 644 /etc/systemd/system/${name_sh}.service; systemctl daemon-reload; systemctl start $name_sh; systemctl enable $name_sh
 }
 
-sh_token(){
-  readp "请输入username：" USERNAME
-  readp "请输入password：" PASSWORD
-  token_sh="${USERNAME}${PASSWORD}"
-  purple "token：$token_sh"
-  while true; do readp "请确认令牌[Yes/No]：" input_sh; case $input_sh in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入username：" USERNAME; readp "请输入password：" PASSWORD; token_sh="${USERNAME}${PASSWORD}"; purple "token：$token_sh";; *) red "请重新输入！"; continue;; esac done
+TOKEN(){
+  readp "请输入username：" serveruser
+  readp "请输入password：" serverpass
+  servertoken="${serveruser}${serverpass}"
+  purple "token：$servertoken"
+  while true; do readp "请确认令牌[Yes/No]：" input; case $input in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入username：" serveruser; readp "请输入password：" serverpass; servertoken="${serveruser}${serverpass}"; purple "token：$servertoken";; *) red "请重新输入！"; continue;; esac done
 }
 
 sh_sshd(){
