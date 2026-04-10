@@ -48,7 +48,7 @@ HTTP(){
     cat > /etc/nginx/nginx.conf << 'HTTP'
 pid #/nginx.pid;
 worker_processes auto;
-error_log /var/log/nginx/error.log;
+error_log /dev/null; #/var/log/nginx/error.log;
 events {
   multi_accept on;
   worker_connections 1024;
@@ -63,7 +63,7 @@ http {
   log_format main '$client_ip - $remote_user [$time_local] "$request"'
                   '$status $body_bytes_sent "$http_referer"'
                   '"$http_user_agent" "$http_x_forwarded_for"';
-  access_log /var/log/nginx/access.log main;
+  #access_log off; #/var/log/nginx/access.log main;
   sendfile on;
   server_tokens off;
   keepalive_timeout 65;
@@ -167,11 +167,6 @@ REALITY(){
   serversid="$(RANDOMSID)"
   cat > $serverconfig << REALITY
 {
-  "log": {
-    "loglevel": "error",
-    "access": "${serverpath}/access.log",
-    "error": "${serverpath}/error.log"
-  },
   "routing": {
     "domainStrategy": "AsIs",
     "rules": [
