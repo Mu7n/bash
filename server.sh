@@ -113,8 +113,8 @@ server {
   }
 }
 server {
-  #listen 443 quic reuseport; #版本不小于 v1.25.0 且 SSL 库支持 QUIC
-  #listen [::]:443 quic reuseport; #版本不小于 v1.25.0 且 SSL 库支持 QUIC
+  listen 443 reuseport ssl; #quic; #版本不小于 v1.25.0 且 SSL 库支持 QUIC
+  listen [::]:443 reuseport ssl; #quic; #版本不小于 v1.25.0 且 SSL 库支持 QUIC
   listen 127.0.0.1:44380 proxy_protocol $nginxhttp
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
@@ -134,6 +134,24 @@ server {
   location ~ ^/surl/(xlink|mlink)/(.*) {
     default_type 'text/plain; charset=utf-8';
     alias ${serversubpath}/\$1/\$2;
+  }
+  location /cgi-bin/gettoken {
+    proxy_pass https://qyapi.weixin.qq.com;
+  }
+  location /cgi-bin/message/send {
+    proxy_pass https://qyapi.weixin.qq.com;
+  }
+  location /cgi-bin/menu/create {
+    proxy_pass https://qyapi.weixin.qq.com;
+  }
+  location /lk/ {
+    proxy_pass http://127.0.0.1:16601/;
+  }
+  location /mp/ {
+    proxy_pass http://127.0.0.1:3000/;
+  }
+  location /jf/ {
+    proxy_pass http://127.0.0.1:8096/;
   }
 }
 #1、reality+vision 和 reality+xhttp 客户端仅使用 www.example.com 域名连接。
