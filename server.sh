@@ -85,7 +85,7 @@ HTTP
 }
 
 DEST(){
-  if [ ! -n "$(cat $serverconfig 2>/dev/null)" ]; then REALITY; fi
+  if [ -z "$(cat $serverconfig 2>/dev/null)" ]; then REALITY; fi
   cat > $nginxconfig << DEST
 server {
   listen 80;
@@ -165,7 +165,7 @@ DEST
 }
 
 REALITY(){
-  if [ ! -n "$serverdomain" ]; then CERT; fi
+  if [ -z "$serverdomain" ]; then CERT; fi
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
   serversid="$(RANDOMSID)"
@@ -476,10 +476,18 @@ DOWNLOAD(){
 DOMAIN(){
   readp "请输入域名：" serverdomain
   purple "域名：$serverdomain"
-  while true; do readp "请确认域名[yes/no]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac done
+  while true; do
+    readp "请确认域名[yes/no]：" input
+    case "$input" in
+      [yY][eE][sS]|[yY]) purple "已确认。"; break;;
+      [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";;
+      *) red "请重新输入！"; continue;;
+    esac
+  done
 }
 
 CERT(){
+  HTTP
   if [ -d "${servercertpath}/${serverdomain}" ]; then
     blue "续签SSL证书。"
     certbot renew --deploy-hook 'service nginx restart'
@@ -488,7 +496,7 @@ CERT(){
     rm -rf /etc/letsencrypt/{archive,live,renewal}
     echo -e "0 0 1 * * certbot renew --deploy-hook 'service nginx restart'" > /var/spool/cron/crontabs/root
     echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconfig
-    service nginx restart && certbot --nginx --agree-tos -n -m ssl@cert.bot -d $serverdomain
+    service nginx restart && certbot --nginx --agree-tos -n -m ssl@cert.bot -d $serverdomain && REALITY && DEST
   fi
 }
 
@@ -503,25 +511,44 @@ RANDOMSID(){
 }
 
 TOKEN(){
-
+  if [ -z "$serveruser" ]; then
+    readp "请输入user：" serveruser
+    purple "$serveruser"
+    while true; do
+      readp "请确认[Yes/No]：" input
+      case $input in
+        [yY][eE][sS]|[yY]) purple "已确认。"; break;;
+        [nN][oO]|[nN]) readp "请输入user：" serveruser; purple "$serveruser";;
+        *) red "请重新输入！"; continue;;
+      esac
+    done
+  fi
+  if [ -z "$serversalt" ]; then
+    readp "请输入salt：" serversalt
+    purple "$serversalt"
+    while true; do
+      readp "请确认[Yes/No]：" input
+      case $input in
+        [yY][eE][sS]|[yY]) purple "已确认。"; break;;
+        [nN][oO]|[nN]) readp "请输入salt：" serversalt; purple "$serversalt";;
+        *) red "请重新输入！"; continue;;
+      esac
+    done
+  fi
+  if [ -z "$(cat ${serversubpath}/${serveruser} 2>/dev/null)" ]; then
+    mkdir -p -m 555 ${serversubpath}/local
+    mkdir -p -m 555 ${serversubpath}/xlink
+    mkdir -p -m 555 ${serversubpath}/mlink
+    echo "$serversalt" > ${serversubpath}/${serveruser}
+  fi
 }
 
 SUBSCRIBE(){
   if [ -z "$(cat $serverconfig 2>/dev/null)" ]; then REALITY; DEST; fi
-  if [ -z "$serveruser" ]; then readp "请输入用户名：" serveruser; fi
-  if [[ -f "${serversubpath}/${serveruser}" && -n "$(cat ${serversubpath}/${serveruser})" ]]; then
-    serversalt="$(cat ${serversubpath}/${serveruser})"
-  else
-    mkdir -p -m 555 ${serversubpath}/local
-    mkdir -p -m 555 ${serversubpath}/xlink
-    mkdir -p -m 555 ${serversubpath}/mlink
-    readp "请输入salt：" serversalt
-    echo "$serversalt" > ${serversubpath}/${serveruser}
-  fi
   xdomain="$(grep '"serverNames"' $serverconfig | awk -F '"' '{print $4}')"
   xuuid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')"
-  xsid="$(grep '"shortIds"' $serverconfig | awk -F '"' '{print $4}')"
   xrpk="$(grep '"publicKey"' $serverconfig | awk -F '"' '{print $4}')"
+  xsid="$(grep '"shortIds"' $serverconfig | awk -F '"' '{print $4}')"
   cat > ${serversubpath}/local/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#${serveruser}-vision
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=/${xuuid}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#${serveruser}-xhttp
@@ -631,9 +658,9 @@ CHECK(){
     fi
   fi
 
-  if [ ! -n "$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')" ]; then
-    HTTP; DOMAIN; CERT; REALITY; DEST
-  fi
+  if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
+
+  if [ -z "$serverdomain" ]; then HTTP; DOMAIN; CERT; fi
 }
 
 Nginx(){
@@ -646,7 +673,7 @@ Nginx(){
     readp "请输入选项：" option
     case "$option" in
       1) CERT; return;;
-      2) DOMAIN; CERT; REALITY; DEST; return;;
+      2) DOMAIN; CERT; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
@@ -663,7 +690,7 @@ Xray(){
     readp "请输入选项：" option
     case "$option" in
       1) DOWNLOAD; return;;
-      2) HTTP; TOKEN; SUBSCRIBE; return;;
+      2) TOKEN; SUBSCRIBE; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
@@ -700,6 +727,7 @@ servercertpath="/etc/letsencrypt/live"
 serverpath="/etc/allone/${servername}"
 serverconfig="${serverpath}/config.json"
 serverprocess="${serverpath}/${servername}"
+serversalt="$(cat ${serversubpath}/${serveruser} 2>/dev/null)"
 serveruser="$(ls -l $serversubpath 2>&1 | awk '/^-/ {print $NF}')"
 serverdomain="$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
