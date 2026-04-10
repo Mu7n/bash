@@ -81,6 +81,7 @@ HTTP
 }
 
 DEST(){
+  if [ ! -n "$(ls $servercertpath 2>/dev/null)" ]; then CERT; fi
   if [ ! -n "$(cat $serverconfig 2>/dev/null)" ]; then REALITY; fi
   cat > $nginxconfig << DEST
 server {
@@ -161,6 +162,7 @@ DEST
 }
 
 REALITY(){
+  if [ ! -n "$serverdomain" ]; then CERT; fi
   if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
@@ -466,7 +468,14 @@ DOWNLOAD(){
   done
 }
 
+DOMAIN(){
+  readp "请输入域名：" serverdomain
+  purple "域名：$serverdomain"
+  while true; do readp "请确认域名[yes/no]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac done
+}
+
 CERT(){
+  if [ -z "$serverdomain" ]; then HTTP; DOMAIN; fi
   if [ -d "${servercertpath}/${serverdomain}" ]; then
     blue "续签SSL证书。"
     certbot renew --deploy-hook 'service nginx restart'
@@ -477,12 +486,6 @@ CERT(){
     echo -e "server {\n    listen 80;\n    listen [::]:80;\n    server_name $serverdomain;\n}" > $nginxconfig
     service nginx restart && certbot --nginx --agree-tos -n -m ssl@cert.bot -d $serverdomain
   fi
-}
-
-DOMAIN(){
-  readp "请输入域名：" serverdomain
-  purple "域名：$serverdomain"
-  while true; do readp "请确认域名[yes/no]：" input; case "$input" in [yY][eE][sS]|[yY]) purple "已确认。"; break;; [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";; *) red "请重新输入！"; continue;; esac done
 }
 
 RANDOMSID(){
@@ -496,8 +499,6 @@ RANDOMSID(){
 }
 
 SUBSCRIBE(){
-  if [ ! -n "$serverdomain" ]; then HTTP; DOMAIN; CERT; fi
-  if [ ! -n "$(cat $serverconfig 2>/dev/null)" ]; then REALITY; DEST; fi
   if [ -z "$serveruser" ]; then readp "请输入用户名：" serveruser; fi
   if [[ -f "${serversubpath}/${serveruser}" && -n "$(cat ${serversubpath}/${serveruser})" ]]; then
     serversalt="$(cat ${serversubpath}/${serveruser})"
@@ -622,7 +623,7 @@ CHECK(){
   fi
 
   if [ ! -n "$serverdomain" ]; then
-    HTTP; DOMAIN; CERT
+    HTTP; CERT
   fi
 
   if [ ! -n "$(cat $serverconfig 2>/dev/null)" ]; then
