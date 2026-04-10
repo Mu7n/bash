@@ -262,7 +262,7 @@ REALITY(){
       },
       "streamSettings": {
         "network": "kcp",
-        "uplinkCapacity": 65, // 设为实际的网速，可逐渐增加直到带宽的两倍左右
+        "uplinkCapacity": 15, // 设为实际的网速，可逐渐增加直到带宽的两倍左右
         "downlinkCapacity": 125, // up 为发送数据的速度，down 为接收数据的速度
         "congestion": true,
         "readBufferSize": 5,
@@ -515,7 +515,7 @@ SUBSCRIBE(){
   cat > ${serversubpath}/local/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#${serveruser}-vision
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=/${xuuid}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#${serveruser}-xhttp
-vless://$(echo -n ":${xuuid}@${xdomain}:23710" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2210%22,%22downlinkCapacity%22:%22125%22,%22seed%22:%22${xsid}%22%7D#${serveruser}-mkcp
+vless://$(echo -n ":${xuuid}@${xdomain}:23710" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2215%22,%22downlinkCapacity%22:%22125%22,%22seed%22:%22${xsid}%22%7D#${serveruser}-mkcp
 hysteria2://${xuuid}@${xdomain}:443?sni=${xdomain}&alpn=h3&insecure=0&downmbps=150#${serveruser}-hy2
 XSUB
   cat > ${serversubpath}/local/mihomo << MSUB
