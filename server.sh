@@ -502,7 +502,12 @@ RANDOMSID(){
   echo "$shortid"
 }
 
+TOKEN(){
+
+}
+
 SUBSCRIBE(){
+  if [ -z "$(cat $serverconfig 2>/dev/null)" ]; then REALITY; DEST; fi
   if [ -z "$serveruser" ]; then readp "请输入用户名：" serveruser; fi
   if [[ -f "${serversubpath}/${serveruser}" && -n "$(cat ${serversubpath}/${serveruser})" ]]; then
     serversalt="$(cat ${serversubpath}/${serveruser})"
@@ -640,7 +645,7 @@ Nginx(){
     purple ""
     readp "请输入选项：" option
     case "$option" in
-      1) CERT; DEST; return;;
+      1) CERT; return;;
       2) DOMAIN; CERT; REALITY; DEST; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
@@ -658,7 +663,7 @@ Xray(){
     readp "请输入选项：" option
     case "$option" in
       1) DOWNLOAD; return;;
-      2) HTTP; SUBSCRIBE; return;;
+      2) HTTP; TOKEN; SUBSCRIBE; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
@@ -690,9 +695,9 @@ case "$(uname -m)" in
 esac
 
 servername="xray"
-serverpath="/etc/aio/${servername}"
-serversubpath="/etc/aio/subscribe"
+serversubpath="/etc/allone/subscribe"
 servercertpath="/etc/letsencrypt/live"
+serverpath="/etc/allone/${servername}"
 serverconfig="${serverpath}/config.json"
 serverprocess="${serverpath}/${servername}"
 serveruser="$(ls -l $serversubpath 2>&1 | awk '/^-/ {print $NF}')"
