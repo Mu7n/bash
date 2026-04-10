@@ -480,7 +480,7 @@ DOMAIN(){
     readp "请确认域名[yes/no]：" input
     case "$input" in
       [yY][eE][sS]|[yY]) purple "已确认。"; break;;
-      [nN][oO]|[nN]) readp "请输入域名：" serverdomain; purple "域名：$serverdomain";;
+      [nN][oO]|[nN]) readp "请输入域名：" serverdomain;;
       *) red "请重新输入！"; continue;;
     esac
   done
@@ -518,7 +518,7 @@ TOKEN(){
       readp "请确认[Yes/No]：" input
       case $input in
         [yY][eE][sS]|[yY]) purple "已确认。"; break;;
-        [nN][oO]|[nN]) readp "请输入user：" serveruser; purple "$serveruser";;
+        [nN][oO]|[nN]) readp "请输入user：" serveruser;;
         *) red "请重新输入！"; continue;;
       esac
     done
@@ -530,7 +530,7 @@ TOKEN(){
       readp "请确认[Yes/No]：" input
       case $input in
         [yY][eE][sS]|[yY]) purple "已确认。"; break;;
-        [nN][oO]|[nN]) readp "请输入salt：" serversalt; purple "$serversalt";;
+        [nN][oO]|[nN]) readp "请输入salt：" serversalt;;
         *) red "请重新输入！"; continue;;
       esac
     done
