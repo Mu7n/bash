@@ -85,7 +85,6 @@ HTTP
 }
 
 DEST(){
-  if [ ! -n "$(ls $servercertpath 2>/dev/null)" ]; then CERT; fi
   if [ ! -n "$(cat $serverconfig 2>/dev/null)" ]; then REALITY; fi
   cat > $nginxconfig << DEST
 server {
@@ -167,7 +166,6 @@ DEST
 
 REALITY(){
   if [ ! -n "$serverdomain" ]; then CERT; fi
-  if [ ! -f "$serverprocess" ]; then DOWNLOAD; fi
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
   serversid="$(RANDOMSID)"
@@ -383,6 +381,7 @@ RCINITD(){
   sleep 1
 
   if [ ! -f "$serversystem" ]; then
+    DOWNLOAD
     cat > $serversystem << RCINITD
 #!/sbin/openrc-run
 name="$servername"
@@ -423,6 +422,7 @@ SYSTEMD(){
   sleep 1
 
   if [ ! -f "$serversystem" ]; then
+    DOWNLOAD
     cat > $serversystem << SYSTEMD
 [Unit]
 Description=$servername Service
@@ -470,6 +470,7 @@ DOWNLOAD(){
       break
     fi
   done
+  if [ -f "$serversystem" ]; then service $servername restart; fi
 }
 
 DOMAIN(){
@@ -479,7 +480,6 @@ DOMAIN(){
 }
 
 CERT(){
-  if [ -z "$serverdomain" ]; then HTTP; DOMAIN; fi
   if [ -d "${servercertpath}/${serverdomain}" ]; then
     blue "续签SSL证书。"
     certbot renew --deploy-hook 'service nginx restart'
@@ -626,12 +626,8 @@ CHECK(){
     fi
   fi
 
-  if [ ! -n "$serverdomain" ]; then
-    HTTP; CERT
-  fi
-
-  if [ ! -n "$(cat $serverconfig 2>/dev/null)" ]; then
-    REALITY; DEST
+  if [ ! -n "$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')" ]; then
+    HTTP; DOMAIN; CERT; REALITY; DEST
   fi
 }
 
@@ -661,8 +657,8 @@ Xray(){
     purple ""
     readp "请输入选项：" option
     case "$option" in
-      1) DOWNLOAD; REALITY; DEST; return;;
-      2) SUBSCRIBE; return;;
+      1) DOWNLOAD; return;;
+      2) HTTP; SUBSCRIBE; return;;
       3) return;;
       *) red "请重新输入！"; continue;;
     esac
