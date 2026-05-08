@@ -117,8 +117,8 @@ server {
   }
 }
 server {
-  listen 443 reuseport ssl; #quic; #版本不小于 v1.25.0 且 SSL 库支持 QUIC
-  listen [::]:443 reuseport ssl; #quic; #版本不小于 v1.25.0 且 SSL 库支持 QUIC
+  listen 443 reuseport ssl; #quic; #frp必需 #版本不小于 v1.25.0 且 SSL 库支持 QUIC
+  listen [::]:443 reuseport ssl; #quic; #frp必需 #版本不小于 v1.25.0 且 SSL 库支持 QUIC
   listen 127.0.0.1:44380 proxy_protocol $nginxhttp
   set_real_ip_from 127.0.0.1;
   real_ip_header proxy_protocol;
@@ -149,7 +149,7 @@ server {
     proxy_pass https://qyapi.weixin.qq.com;
   }
   location /lk/ {
-    proxy_pass http://127.0.0.1:16601/;
+    proxy_pass http://127.0.0.1:16601/$token/;
   }
   location /mp/ {
     proxy_pass http://127.0.0.1:3000/;
