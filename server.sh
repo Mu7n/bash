@@ -185,6 +185,10 @@ REALITY(){
       {
         "protocol": ["bittorrent"],
         "outboundTag": "direct"
+      },
+      {
+        "user": ["xray@reality.xtls", "xray@reality.xhttp"],
+        "outboundTag": "reverse"
       }
     ]
   },
@@ -197,7 +201,16 @@ REALITY(){
         "clients": [
           {
             "id": "$serveruuid",
-            "flow": "xtls-rprx-vision"
+            "flow": "xtls-rprx-vision",
+            "reverse": {
+              "tag": "reverse"
+            }
+          },
+          {
+            "id": "$serveruuid",
+            "flow": "xtls-rprx-vision",
+            "email": "xray@reality.xtls"
+            }
           }
         ],
         "decryption": "none",
@@ -233,7 +246,14 @@ REALITY(){
       "settings": {
         "clients": [
           {
-            "id": "$serveruuid"
+            "id": "$serveruuid",
+            "reverse": {
+              "tag": "reverse"
+            }
+          },
+          {
+            "id": "$serveruuid",
+            "email": "xray@reality.xhttp"
           }
         ],
         "decryption": "none"
