@@ -187,7 +187,7 @@ REALITY(){
         "outboundTag": "direct"
       },
       {
-        "user": ["xray@reality.xtls"],
+        "user": ["xray@reality.xhttp"],
         "outboundTag": "reverse"
       }
     ]
@@ -201,17 +201,7 @@ REALITY(){
         "users": [
           {
             "id": "$serveruuid",
-            "flow": "xtls-rprx-vision",
-            "reverse": {
-              "tag": "reverse"
-            }
-          },
-          {
-            "id": "$serveruuid",
-            "flow": "xtls-rprx-vision",
-            "email": "xray@reality.xtls"
-            }
-          }
+            "flow": "xtls-rprx-vision"
         ],
         "decryption": "none",
         "fallbacks": [
@@ -246,7 +236,15 @@ REALITY(){
       "settings": {
         "users": [
           {
-            "id": "$serveruuid"
+            "id": "$serveruuid",
+            "reverse": {
+              "tag": "reverse"
+            }
+          },
+          {
+            "id": "$serveruuid",
+            "email": "xray@reality.xhttp"
+            }
           }
         ],
         "decryption": "none"
