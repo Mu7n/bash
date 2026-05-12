@@ -38,3 +38,4 @@
         "routeOnly": true
       }
     }
+vless://$(echo -n ":${xuuid}@${xdomain}:23710" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2215%22,%22downlinkCapacity%22:%22125%22,%22seed%22:%22${xsid}%22%7D#${serveruser}-mkcp
