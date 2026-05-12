@@ -1,0 +1,40 @@
+,
+    {
+      "tag": "mkcp",
+      "port": 23710,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "$serveruuid"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "kcp",
+        "uplinkCapacity": 15, // 设为实际的网速，可逐渐增加直到带宽的两倍左右
+        "downlinkCapacity": 125, // up 为发送数据的速度，down 为接收数据的速度
+        "congestion": true,
+        "readBufferSize": 5,
+        "writeBufferSize": 5,
+        "finalmask": {
+          "udp": [
+            {
+              "type": "header-dtls"
+            },
+            {
+              "type": "mkcp-aes128gcm",
+              "settings": {
+                "password": "$serversid"
+              }
+            }
+          ]
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls", "quic"],
+        "routeOnly": true
+      }
+    }
