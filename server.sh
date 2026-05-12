@@ -149,7 +149,7 @@ server {
     proxy_pass https://qyapi.weixin.qq.com;
   }
   location /lk/ {
-    proxy_pass http://127.0.0.1:16601/;
+    proxy_pass http://127.0.0.1:16601/$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')/;
   }
   location /mp/ {
     proxy_pass http://127.0.0.1:3000/;
@@ -526,7 +526,6 @@ SUBSCRIBE(){
   cat > ${serversubpath}/local/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#${serveruser}-vision
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=/${xuuid}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#${serveruser}-xhttp
-vless://$(echo -n ":${xuuid}@${xdomain}:23710" | base64 -w 0)?type=mkcp&obfs=mkcp&obfsParam=%7B%22header%22:%22dtls%22,%22congestion%22:%22true%22,%22uplinkCapacity%22:%2215%22,%22downlinkCapacity%22:%22125%22,%22seed%22:%22${xsid}%22%7D#${serveruser}-mkcp
 hysteria2://${xuuid}@${xdomain}:443?sni=${xdomain}&alpn=h3&insecure=0&downmbps=150#${serveruser}-hy2
 XSUB
   cat > ${serversubpath}/local/mihomo << MSUB
