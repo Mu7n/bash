@@ -202,6 +202,7 @@ REALITY(){
           {
             "id": "$serveruuid",
             "flow": "xtls-rprx-vision"
+          }
         ],
         "decryption": "none",
         "fallbacks": [
@@ -244,7 +245,6 @@ REALITY(){
           {
             "id": "$serveruuid",
             "email": "xray@reality.xhttp"
-            }
           }
         ],
         "decryption": "none"
