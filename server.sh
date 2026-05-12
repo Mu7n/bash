@@ -187,7 +187,7 @@ REALITY(){
         "outboundTag": "direct"
       },
       {
-        "user": ["xray@reality.xtls", "xray@reality.xhttp"],
+        "user": ["xray@reality.xtls"],
         "outboundTag": "reverse"
       }
     ]
@@ -198,7 +198,7 @@ REALITY(){
       "port": 443,
       "protocol": "vless",
       "settings": {
-        "clients": [
+        "users": [
           {
             "id": "$serveruuid",
             "flow": "xtls-rprx-vision",
@@ -244,16 +244,9 @@ REALITY(){
       "port": 44308,
       "protocol": "vless",
       "settings": {
-        "clients": [
+        "users": [
           {
-            "id": "$serveruuid",
-            "reverse": {
-              "tag": "reverse"
-            }
-          },
-          {
-            "id": "$serveruuid",
-            "email": "xray@reality.xhttp"
+            "id": "$serveruuid"
           }
         ],
         "decryption": "none"
@@ -273,51 +266,12 @@ REALITY(){
       }
     },
     {
-      "tag": "mkcp",
-      "port": 23710,
-      "protocol": "vless",
-      "settings": {
-        "clients": [
-          {
-            "id": "$serveruuid"
-          }
-        ],
-        "decryption": "none"
-      },
-      "streamSettings": {
-        "network": "kcp",
-        "uplinkCapacity": 15, // 设为实际的网速，可逐渐增加直到带宽的两倍左右
-        "downlinkCapacity": 125, // up 为发送数据的速度，down 为接收数据的速度
-        "congestion": true,
-        "readBufferSize": 5,
-        "writeBufferSize": 5,
-        "finalmask": {
-          "udp": [
-            {
-              "type": "header-dtls"
-            },
-            {
-              "type": "mkcp-aes128gcm",
-              "settings": {
-                "password": "$serversid"
-              }
-            }
-          ]
-        }
-      },
-      "sniffing": {
-        "enabled": true,
-        "destOverride": ["http", "tls", "quic"],
-        "routeOnly": true
-      }
-    },
-    {
       "tag": "hy2",
       "port": 443,
       "protocol": "hysteria",
       "settings": {
         "version": 2,
-        "clients": [
+        "users": [
           {
             "auth": "$serveruuid"
           }
@@ -349,8 +303,8 @@ REALITY(){
         "finalmask": {
           "quicParams": {
             "congestion": "brutal",
-            "brutalDown": "40 mbps", // 服务端的下载是客户端的上传
-            "brutalUp": "200 mbps" // 服务端的上传是客户端的下载
+            "brutalDown": "50 mbps", // 服务端的下载是客户端的上传
+            "brutalUp": "150 mbps" // 服务端的上传是客户端的下载
           }
         }
       },
