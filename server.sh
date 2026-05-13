@@ -189,7 +189,12 @@ REALITY(){
       {
         "user": ["xray@reality.xhttp"],
         "outboundTag": "reverse"
+      },
+      {
+        "inboundTag": ["lk", "mp", "jf"],
+        "outboundTag": "reverse"
       }
+
     ]
   },
   "inbounds": [
@@ -262,6 +267,21 @@ REALITY(){
         "destOverride": ["http", "tls", "quic"],
         "routeOnly": true
       }
+    },
+    {
+      "tag": "lk",
+      "port": 16601,
+      "protocol": "tunnel"
+    },
+    {
+      "tag": "mp",
+      "port": 3000,
+      "protocol": "tunnel"
+    },
+    {
+      "tag": "jf",
+      "port": 8096,
+      "protocol": "tunnel"
     },
     {
       "tag": "hy2",
