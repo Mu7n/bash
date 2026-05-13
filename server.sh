@@ -125,16 +125,6 @@ server {
   server_name $serverdomain;
   ssl_certificate ${servercertpath}/${serverdomain}/fullchain.pem;
   ssl_certificate_key ${servercertpath}/${serverdomain}/privkey.pem;
-  location /$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}') { #与 reality-xhttp 中 path 对应
-    grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
-    grpc_set_header Host \$host;
-    grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-  }
-  location / {
-    root /etc/nginx/HTML;
-    add_header Alt-Svc 'h3=":443"; ma=86400'; #通告 HTTP/3 server 的可用性
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-  }
   location ~ ^/surl/(xlink|mlink)/(.*) {
     default_type 'text/plain; charset=utf-8';
     alias ${serversubpath}/\$1/\$2;
@@ -156,6 +146,16 @@ server {
   }
   location /jf/ {
     proxy_pass http://127.0.0.1:8096/;
+  }
+  location /$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}') { #与 reality-xhttp 中 path 对应
+    grpc_pass grpc://127.0.0.1:44308; #转发 reality-xhttp 监听进程
+    grpc_set_header Host \$host;
+    grpc_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+  }
+  location / {
+    root /etc/nginx/HTML;
+    add_header Alt-Svc 'h3=":443"; ma=86400'; #通告 HTTP/3 server 的可用性
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
   }
 }
 #1、reality+vision 和 reality+xhttp 客户端仅使用 www.example.com 域名连接。
@@ -198,7 +198,7 @@ REALITY(){
       "port": 443,
       "protocol": "vless",
       "settings": {
-        "users": [
+        "clients": [
           {
             "id": "$serveruuid",
             "flow": "xtls-rprx-vision"
@@ -235,7 +235,7 @@ REALITY(){
       "port": 44308,
       "protocol": "vless",
       "settings": {
-        "users": [
+        "clients": [
           {
             "id": "$serveruuid",
             "reverse": {
@@ -269,7 +269,7 @@ REALITY(){
       "protocol": "hysteria",
       "settings": {
         "version": 2,
-        "users": [
+        "clients": [
           {
             "auth": "$serveruuid"
           }
