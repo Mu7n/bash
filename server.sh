@@ -191,7 +191,7 @@ REALITY(){
         "outboundTag": "reverse"
       },
       {
-        "inboundTag": ["lk", "mp", "jf"],
+        "inboundTag": ["reverseport1", "reverseport2", "reverseport3"],
         "outboundTag": "reverse"
       }
 
@@ -269,17 +269,17 @@ REALITY(){
       }
     },
     {
-      "tag": "lk",
+      "tag": "reverseport1",
       "port": 16601,
       "protocol": "tunnel"
     },
     {
-      "tag": "mp",
+      "tag": "reverseport2",
       "port": 3000,
       "protocol": "tunnel"
     },
     {
-      "tag": "jf",
+      "tag": "reverseport3",
       "port": 8096,
       "protocol": "tunnel"
     },
@@ -408,7 +408,7 @@ SYSTEMD(){
 
   if ! type "nginx" "certbot" "unzip" "tar" "qrencode" "ufw" >/dev/null 2>&1; then
     blue "开始安装。"
-    apt update && apt upgrade && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw
+    apt update && apt upgrade -y && apt install -y nginx certbot python3-certbot-nginx unzip tar qrencode ufw
   fi
 
   sleep 1
