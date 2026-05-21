@@ -570,10 +570,10 @@ proxies:
     port: 443
     uuid: $xuuid
     network: xhttp
-    obfs: xhttp
     xhttp-opts:
-      path: /$xuuid
-      mode: auto
+      host: ""
+      mode: "auto"
+      path: "/$xuuid"
     reality-opts:
       public-key: $xrpk
       short-id: $xsid
