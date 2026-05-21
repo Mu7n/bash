@@ -139,7 +139,7 @@ server {
     proxy_pass https://qyapi.weixin.qq.com;
   }
   location /lk/ {
-    proxy_pass http://127.0.0.1:16601/$(grep '"id"' $serverconfig | awk -F '"' 'NR==1 {print $4}')/;
+    proxy_pass http://127.0.0.1:16601/token/;
   }
   location /mp/ {
     proxy_pass http://127.0.0.1:3000/;
@@ -168,12 +168,21 @@ REALITY(){
   if [ -z "$serverdomain" ]; then CERT; fi
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
+  serverrid="$(xray uuid)"
   serversid="$(RANDOMSID)"
   cat > $serverconfig << REALITY
 {
   "routing": {
     "domainStrategy": "AsIs",
     "rules": [
+      {
+        "inboundTag": ["reverse1", "reverse2", "reverse3"],
+        "outboundTag": "reverse"
+      },
+      {
+        "user": ["reverse@reality.xhttp"],
+        "outboundTag": "reverse"
+      },
       {
         "domain": ["geosite:category-ads-all"],
         "outboundTag": "block"
@@ -185,16 +194,7 @@ REALITY(){
       {
         "protocol": ["bittorrent"],
         "outboundTag": "direct"
-      },
-      {
-        "user": ["xray@reality.xhttp"],
-        "outboundTag": "reverse"
-      },
-      {
-        "inboundTag": ["reverseport1", "reverseport2", "reverseport3"],
-        "outboundTag": "reverse"
       }
-
     ]
   },
   "inbounds": [
@@ -203,13 +203,13 @@ REALITY(){
       "port": 443,
       "protocol": "vless",
       "settings": {
+        "decryption": "none",
         "clients": [
           {
             "id": "$serveruuid",
             "flow": "xtls-rprx-vision"
           }
-        ],
-        "decryption": "none",
+        ]
         "fallbacks": [
           {
             "dest": 44308 // 回落 reality-xhttp 监听进程
@@ -240,6 +240,7 @@ REALITY(){
       "port": 44308,
       "protocol": "vless",
       "settings": {
+        "decryption": "none",
         "clients": [
           {
             "id": "$serveruuid",
@@ -248,11 +249,10 @@ REALITY(){
             }
           },
           {
-            "id": "$serveruuid",
-            "email": "xray@reality.xhttp"
+            "id": "$serverrid",
+            "email": "reverse@reality.xhttp"
           }
-        ],
-        "decryption": "none"
+        ]
       },
       "streamSettings": {
         "network": "xhttp",
@@ -269,17 +269,17 @@ REALITY(){
       }
     },
     {
-      "tag": "reverseport1",
+      "tag": "reverse1",
       "port": 16601,
       "protocol": "tunnel"
     },
     {
-      "tag": "reverseport2",
+      "tag": "reverse2",
       "port": 3000,
       "protocol": "tunnel"
     },
     {
-      "tag": "reverseport3",
+      "tag": "reverse3",
       "port": 8096,
       "protocol": "tunnel"
     },
