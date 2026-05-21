@@ -209,7 +209,7 @@ REALITY(){
             "id": "$serveruuid",
             "flow": "xtls-rprx-vision"
           }
-        ]
+        ],
         "fallbacks": [
           {
             "dest": 44308 // 回落 reality-xhttp 监听进程
