@@ -138,9 +138,6 @@ server {
   location /cgi-bin/menu/create {
     proxy_pass https://qyapi.weixin.qq.com;
   }
-  location /lk/ {
-    proxy_pass http://127.0.0.1:16601/token/;
-  }
   location /mp/ {
     proxy_pass http://127.0.0.1:3000/;
   }
@@ -177,8 +174,12 @@ REALITY(){
     "domainStrategy": "AsIs",
     "rules": [
       {
-        "inboundTag": ["reverse1", "reverse2", "reverse3"],
-        "outboundTag": "reverse"
+        "inboundTag": ["portal1"],
+        "outboundTag": "reverse1"
+      },
+      {
+        "inboundTag": ["portal2"],
+        "outboundTag": "reverse2"
       },
       {
         "user": ["reverse@reality.xhttp"],
@@ -244,9 +245,15 @@ REALITY(){
         "decryption": "none",
         "clients": [
           {
-            "id": "$serverrpid",
+            "id": "$serverp1id",
             "reverse": {
-              "tag": "reverse"
+              "tag": "reverse1"
+            }
+          },
+          {
+            "id": "$serverp2id",
+            "reverse": {
+              "tag": "reverse2"
             }
           },
           {
@@ -270,17 +277,12 @@ REALITY(){
       }
     },
     {
-      "tag": "reverse1",
-      "port": 16601,
-      "protocol": "tunnel"
-    },
-    {
-      "tag": "reverse2",
+      "tag": "portal1",
       "port": 3000,
       "protocol": "tunnel"
     },
     {
-      "tag": "reverse3",
+      "tag": "portal2",
       "port": 8096,
       "protocol": "tunnel"
     },
