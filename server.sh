@@ -168,7 +168,8 @@ REALITY(){
   if [ -z "$serverdomain" ]; then CERT; fi
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
-  serverrid="$(xray uuid)"
+  serverrpid="$(xray uuid)"
+  serverrnid="$(xray uuid)"
   serversid="$(RANDOMSID)"
   cat > $serverconfig << REALITY
 {
@@ -243,13 +244,13 @@ REALITY(){
         "decryption": "none",
         "clients": [
           {
-            "id": "$serveruuid",
+            "id": "$serverrpid",
             "reverse": {
               "tag": "reverse"
             }
           },
           {
-            "id": "$serverrid",
+            "id": "$serverrnid",
             "email": "reverse@reality.xhttp"
           }
         ]
