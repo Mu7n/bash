@@ -168,7 +168,8 @@ REALITY(){
   if [ -z "$serverdomain" ]; then CERT; fi
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
-  serverrpid="$(xray uuid)"
+  serverp1id="$(xray uuid)"
+  serverp2id="$(xray uuid)"
   serverrnid="$(xray uuid)"
   serversid="$(RANDOMSID)"
   cat > $serverconfig << REALITY
