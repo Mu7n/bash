@@ -138,6 +138,9 @@ server {
   location /cgi-bin/menu/create {
     proxy_pass https://qyapi.weixin.qq.com;
   }
+  location /lk/ {
+    proxy_pass http://127.0.0.1:端口/安全入口/;
+  }
   location /mp/ {
     proxy_pass http://127.0.0.1:3000/;
   }
