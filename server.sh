@@ -168,9 +168,8 @@ REALITY(){
   if [ -z "$serverdomain" ]; then CERT; fi
   serverx25519="$(xray x25519)"
   serveruuid="$(xray uuid)"
-  serverp1id="$(xray uuid)"
-  serverp2id="$(xray uuid)"
-  serverrnid="$(xray uuid)"
+  serverpid="$(xray uuid)"
+  servernid="$(xray uuid)"
   serversid="$(RANDOMSID)"
   cat > $serverconfig << REALITY
 {
@@ -178,12 +177,8 @@ REALITY(){
     "domainStrategy": "AsIs",
     "rules": [
       {
-        "inboundTag": ["portal1"],
-        "outboundTag": "reverse1"
-      },
-      {
-        "inboundTag": ["portal2"],
-        "outboundTag": "reverse2"
+        "inboundTag": ["portal1", "portal2"],
+        "outboundTag": "reverse"
       },
       {
         "user": ["reverse@reality.xhttp"],
@@ -249,20 +244,17 @@ REALITY(){
         "decryption": "none",
         "clients": [
           {
-            "id": "$serverp1id",
+            "id": "$serverpid",
             "reverse": {
-              "tag": "reverse1"
+              "tag": "reverse"
             }
           },
           {
-            "id": "$serverp2id",
-            "reverse": {
-              "tag": "reverse2"
-            }
-          },
-          {
-            "id": "$serverrnid",
+            "id": "$servernid",
             "email": "reverse@reality.xhttp"
+          },
+          {
+            "id": "$serveruuid"
           }
         ]
       },
