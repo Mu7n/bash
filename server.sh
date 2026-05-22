@@ -603,6 +603,75 @@ MSUB
   blue "\nXray\n"; purple "$subxlink\n"; $qrcmd "$subxlink"; blue "\nMihomo\n"; purple "$submlink\n"; $qrcmd "$submlink"
 }
 
+REVERSE(){
+  xcidr="192.168.11.11"
+  xpid="$(grep '"id"' $serverconfig | awk -F '"' 'NR==2 {print $4}')"
+  cat > ${serversubpath}/local/reverse << RSUB
+{
+  "routing": {
+    "rules": [
+      {
+        "inboundTag": ["reverse"],
+        "outboundTag": "portal"
+      }
+    ]
+  },
+  "outbounds": [
+    {
+      "protocol": "freedom"
+    },
+    {
+      "protocol": "freedom",
+      "tag": "portal",
+      "settings": {
+        "redirect": "${xcidr}:0",
+        "finalRules": [
+          {
+            "action": "allow",
+            "network": "tcp",
+            "ip": "$xcidr",
+            "port": "16601,3000,8096"
+          }
+        ]
+      }
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "address": "$xdomain",
+        "port": 443,
+        "encryption": "none",
+        "id": "$xpid",
+        "reverse": {
+          "tag": "reverse"
+        }
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "xhttpSettings": {
+          "host": "",
+          "mode": "auto",
+          "path": "/${xuuid}"
+        },
+        "security": "reality",
+        "realitySettings": {
+          "serverName": "$xdomain",
+          "fingerprint": "chrome",
+          "password": "$xrpk",
+          "shortId": "$xsid"
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls", "quic"],
+        "routeOnly": true
+      }
+    }
+  ]
+}
+RSUB
+}
+
 SSHD(){
   if [ ! -f /etc/ssh/sshd_config.d/sshd.conf ]; then
     readp "请输入SSH端口：" serversshd
