@@ -139,7 +139,7 @@ server {
     proxy_pass https://qyapi.weixin.qq.com;
   }
   location /lk/ {
-    proxy_pass http://127.0.0.1:port/SecureEntrance/;
+    proxy_pass http://127.0.0.1:16601/安全入口/;
   }
   location /mp/ {
     proxy_pass http://127.0.0.1:3000/;
@@ -787,7 +787,7 @@ serverpath="/etc/allone/${servername}"
 serverconfig="${serverpath}/config.json"
 serverprocess="${serverpath}/${servername}"
 serveruser="$(ls -l $serversubpath 2>&1 | awk '/^-/ {print $NF}')"
-serversalt="$(cat ${serversubpath}/${serveruser} >/dev/null 2>&1)"
+serversalt="$(cat ${serversubpath}/${serveruser} 2>/dev/null)"
 serverdomain="$(ls -l $servercertpath 2>&1 | awk '/^d/ {print $NF}')"
 serversite="https://github.com/XTLS/Xray-core/releases/download"
 serverapi="https://api.github.com/repos/XTLS/Xray-core/releases/latest"
