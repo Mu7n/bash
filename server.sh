@@ -139,7 +139,7 @@ server {
     proxy_pass https://qyapi.weixin.qq.com;
   }
   location /lk/ {
-    proxy_pass http://127.0.0.1:端口/安全入口/;
+    proxy_pass http://127.0.0.1:port/SecureEntrance/;
   }
   location /mp/ {
     proxy_pass http://127.0.0.1:3000/;
