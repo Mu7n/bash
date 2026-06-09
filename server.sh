@@ -320,6 +320,7 @@ REALITY(){
         "finalmask": {
           "quicParams": {
             "congestion": "brutal",
+            "bbrProfile": "aggressive",
             "brutalDown": "50 mbps", // 服务端的下载是客户端的上传
             "brutalUp": "150 mbps" // 服务端的上传是客户端的下载
           }
@@ -543,7 +544,7 @@ SUBSCRIBE(){
   cat > ${serversubpath}/local/xray << XSUB
 vless://${xuuid}@${xdomain}:443?type=tcp&flow=xtls-rprx-vision&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#${serveruser}-vision
 vless://${xuuid}@${xdomain}:443?type=xhttp&path=/${xuuid}&mode=auto&tls=true&security=reality&sni=${xdomain}&pbk=${xrpk}&sid=${xsid}&fp=chrome#${serveruser}-xhttp
-hysteria2://${xuuid}@${xdomain}:443?sni=${xdomain}&alpn=h3&insecure=0&downmbps=150#${serveruser}-hy2
+hysteria2://${xuuid}@${xdomain}:443?sni=${xdomain}&insecure=0&downmbps=150#${serveruser}-hy2
 XSUB
   cat > ${serversubpath}/local/mihomo << MSUB
 proxies:
@@ -589,8 +590,6 @@ proxies:
     password: $xuuid
     downmbps: 150
     sni: $xdomain
-    alpn:
-      - h3
     skip-cert-verify: false
 MSUB
   rm -rf ${serversubpath}/xlink/*
