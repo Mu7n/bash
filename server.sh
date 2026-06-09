@@ -589,7 +589,8 @@ proxies:
     password: $xuuid
     downmbps: 150
     sni: $xdomain
-    alpn: h3
+    alpn:
+      - h3
     skip-cert-verify: false
 MSUB
   rm -rf ${serversubpath}/xlink/*
